@@ -10,7 +10,7 @@ type GameRelease struct {
 	GameId uuid.UUID
 	// TitleOverride can be used if the title of the game is somehow modified for a specific release.
 	TitleOverride string
-	Description   string
+	Description   *string
 	// ReleaseDate indicates when this release was (or will be) published. Nil if not known.
 	// Keep in mind that setting nil assumes that this is already released.
 	// Use ReleaseDateUnknown to change that.

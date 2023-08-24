@@ -1,7 +1,18 @@
 package main
 
-import "fmt"
+import (
+	"github.com/Geepr/game/database"
+	"github.com/KowalskiPiotr98/gotabase"
+	_ "github.com/lib/pq"
+)
 
 func main() {
-	fmt.Println("Hello")
+	err := gotabase.InitialiseConnection("user=postgres dbname=geepr password=postgres sslmode=disable", "postgres")
+	if err != nil {
+		panic(err)
+	}
+	defer gotabase.CloseConnection()
+	if err = database.RunMigrations(gotabase.GetConnection()); err != nil {
+		panic(err)
+	}
 }
