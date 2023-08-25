@@ -9,6 +9,13 @@ func AssertDefault[T comparable](t *testing.T, value T) {
 	}
 }
 
+func AssertNotDefault[T comparable](t *testing.T, value T) {
+	var defaultValue T
+	if value == defaultValue {
+		t.Fatalf("Expected not default variable value")
+	}
+}
+
 func AssertCountEqual[T any](t *testing.T, value []T, expectedCount int) {
 	if len(value) != expectedCount {
 		t.Fatalf("Expected %d elements in collection, got %d instead", expectedCount, len(value))

@@ -130,3 +130,16 @@ func TestGameRepository_GetGameById_GameIdNotFound_ReturnsSpecificError(t *testi
 
 	mocks.AssertEquals(t, err, DataNotFoundErr)
 }
+
+func TestGameRepository_AddGame_NewName_GameAdded(t *testing.T) {
+	test := newGameRepoTest(t)
+	test.insertMockData()
+	newGame := models.Game{
+		Title: "totally new and unique title",
+	}
+
+	err := test.repo.AddGame(&newGame)
+
+	mocks.AssertDefault(t, err)
+	mocks.AssertNotDefault(t, newGame.Id)
+}

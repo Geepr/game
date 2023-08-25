@@ -39,6 +39,18 @@ func (repo *GameRepository) GetGameById(id uuid.UUID) (*models.Game, error) {
 	return repo.scanGame(query, id)
 }
 
+func (repo *GameRepository) AddGame(game *models.Game) error {
+	query := "insert into games (title, description, archived) VALUES ($1, $2, $3) returning id"
+	result, err := repo.connector.QueryRow(query, game.Title, game.Description, game.Archived)
+	if err != nil {
+		return err
+	}
+	if err = result.Scan(&game.Id); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (repo *GameRepository) scanGames(sql string, args ...interface{}) (*[]*models.Game, error) {
 	result, err := repo.connector.QueryRows(sql, args...)
 	if err != nil {
