@@ -30,10 +30,10 @@ func (repo *GameRepository) GetGames(titleQuery string, pageIndex int, pageSize 
 	if err != nil {
 		return nil, err
 	}
-	return repo.scanGames(query, args)
+	return repo.scanGames(query, args...)
 }
 
-func (repo *GameRepository) scanGames(sql string, args []interface{}) (*[]*models.Game, error) {
+func (repo *GameRepository) scanGames(sql string, args ...interface{}) (*[]*models.Game, error) {
 	result, err := repo.connector.QueryRows(sql, args...)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (repo *GameRepository) scanGames(sql string, args []interface{}) (*[]*model
 	return &games, nil
 }
 
-func (repo *GameRepository) scanGame(sql string, args []interface{}) (*models.Game, error) {
+func (repo *GameRepository) scanGame(sql string, args ...interface{}) (*models.Game, error) {
 	result, err := repo.connector.QueryRow(sql, args...)
 	if err != nil {
 		return nil, err
