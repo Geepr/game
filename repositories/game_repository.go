@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Geepr/game/models"
 	"github.com/KowalskiPiotr98/gotabase"
+	"strings"
 )
 
 type GameRepository struct {
@@ -22,8 +23,9 @@ const (
 )
 
 func (repo *GameRepository) GetGames(titleQuery string, pageIndex int, pageSize int, order GameSortOrder) (*[]*models.Game, error) {
-	query := fmt.Sprintf("select id, title, description, archived from games order by %s", order.getSqlColumnName())
-	query, args := appendWhereClause(query, "title", "=", titleQuery, isStringNotEmpty, []any{})
+	query := "select id, title, description, archived from games"
+	query, args := appendWhereClause(query, "title_normalised", "like", makeLikeQuery(strings.ToUpper(titleQuery)), isStringNotEmpty, []any{})
+	query += fmt.Sprintf(" order by %s", order.getSqlColumnName())
 	query, err := paginate(query, pageIndex, pageSize)
 	if err != nil {
 		return nil, err

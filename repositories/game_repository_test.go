@@ -4,6 +4,7 @@ import (
 	"github.com/Geepr/game/mocks"
 	"github.com/Geepr/game/models"
 	"github.com/KowalskiPiotr98/gotabase"
+	"strings"
 	"testing"
 )
 
@@ -30,22 +31,22 @@ func (test *gameRepoTest) cleanup() {
 }
 
 func (test *gameRepoTest) insertMockData() {
-	_, err := test.connection.Exec("insert into games (title, archived) values ('a', false), ('b', false), ('c', true), ('d', false)")
+	_, err := test.connection.Exec("insert into games (title, archived) values ('aaa', false), ('aab', false), ('cbb', true), ('def', false)")
 	test.mockData = &[]models.Game{
 		{
-			Title:    "a",
+			Title:    "aaa",
 			Archived: false,
 		},
 		{
-			Title:    "b",
+			Title:    "aab",
 			Archived: false,
 		},
 		{
-			Title:    "c",
+			Title:    "cbb",
 			Archived: true,
 		},
 		{
-			Title:    "d",
+			Title:    "def",
 			Archived: false,
 		},
 	}
@@ -61,6 +62,24 @@ func TestGameRepository_GetGames_NoParametersSet_ReturnsAllGames(t *testing.T) {
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, *result, 4)
 	for _, game := range *test.mockData {
+		mocks.AssertArrayContains(t, *result, func(value *models.Game) bool {
+			return value.Title == game.Title && value.Archived == game.Archived
+		})
+	}
+}
+
+func TestGameRepository_GetGames_TitleQueryDefined_ReturnsMatching(t *testing.T) {
+	test := newGameRepoTest(t)
+	test.insertMockData()
+
+	result, err := test.repo.GetGames("Aa", 0, 100, GameId)
+
+	mocks.AssertDefault(t, err)
+	mocks.AssertCountEqual(t, *result, 2)
+	for _, game := range *test.mockData {
+		if !strings.Contains(game.Title, "aa") {
+			continue
+		}
 		mocks.AssertArrayContains(t, *result, func(value *models.Game) bool {
 			return value.Title == game.Title && value.Archived == game.Archived
 		})

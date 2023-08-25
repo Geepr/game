@@ -37,11 +37,15 @@ func appendWhereClause[T any](currentQuery string, columnName string, operand st
 		combiningWord = "and"
 	}
 
-	newQuery = fmt.Sprintf("%s %s %s %s ?", currentQuery, combiningWord, columnName, operand)
+	newQuery = fmt.Sprintf("%s %s %s %s $%d", currentQuery, combiningWord, columnName, operand, len(positionalValues)+1)
 	newPositional = append(positionalValues, value)
 	return
 }
 
 func isStringNotEmpty(value string) bool {
-	return value != ""
+	return value != "" && value != "%%"
+}
+
+func makeLikeQuery(value string) string {
+	return fmt.Sprintf("%%%s%%", value)
 }
