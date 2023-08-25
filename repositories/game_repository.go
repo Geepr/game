@@ -68,6 +68,22 @@ func (repo *GameRepository) UpdateGame(id uuid.UUID, updatedGame *models.Game) e
 	return nil
 }
 
+func (repo *GameRepository) DeleteGame(id uuid.UUID) error {
+	query := "delete from games where id = $1"
+	result, err := repo.connector.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected != 1 {
+		return DataNotFoundErr
+	}
+	return nil
+}
+
 func (repo *GameRepository) scanGames(sql string, args ...interface{}) (*[]*models.Game, error) {
 	result, err := repo.connector.QueryRows(sql, args...)
 	if err != nil {

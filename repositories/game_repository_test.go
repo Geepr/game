@@ -173,3 +173,25 @@ func TestGameRepository_UpdateGame_GameMissing_ReturnsNotFound(t *testing.T) {
 
 	mocks.AssertEquals(t, err, DataNotFoundErr)
 }
+
+func TestGameRepository_DeleteGame_GameExists_RemovesGame(t *testing.T) {
+	test := newGameRepoTest(t)
+	test.insertMockData()
+	toDelete := (*(test.mockData))[2]
+
+	err := test.repo.DeleteGame(toDelete.Id)
+
+	mocks.AssertDefault(t, err)
+	_, err = test.repo.GetGameById(toDelete.Id)
+	mocks.AssertEquals(t, err, DataNotFoundErr)
+}
+
+func TestGameRepository_DeleteGame_MissingId_ReturnsNotFound(t *testing.T) {
+	test := newGameRepoTest(t)
+	test.insertMockData()
+	fakeId, _ := uuid.NewV4()
+
+	err := test.repo.DeleteGame(fakeId)
+
+	mocks.AssertEquals(t, err, DataNotFoundErr)
+}
