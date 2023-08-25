@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Geepr/game/models"
 	"github.com/KowalskiPiotr98/gotabase"
+	"github.com/gofrs/uuid"
 	"strings"
 )
 
@@ -31,6 +32,11 @@ func (repo *GameRepository) GetGames(titleQuery string, pageIndex int, pageSize 
 		return nil, err
 	}
 	return repo.scanGames(query, args...)
+}
+
+func (repo *GameRepository) GetGameById(id uuid.UUID) (*models.Game, error) {
+	query := "select id, title, description, archived from games where id = $1"
+	return repo.scanGame(query, id)
 }
 
 func (repo *GameRepository) scanGames(sql string, args ...interface{}) (*[]*models.Game, error) {
@@ -63,7 +69,7 @@ func (repo *GameRepository) scanGame(sql string, args ...interface{}) (*models.G
 func (repo *GameRepository) scanRow(row gotabase.Row) (*models.Game, error) {
 	game := models.Game{}
 	if err := row.Scan(&game.Id, &game.Title, &game.Description, &game.Archived); err != nil {
-		return nil, err
+		return nil, convertIfNotFoundErr(err)
 	}
 	return &game, nil
 }

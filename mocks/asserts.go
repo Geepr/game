@@ -23,3 +23,9 @@ func AssertArrayContains[T any](t *testing.T, collection []T, finder func(value 
 	}
 	t.Fatalf("Expected value was not found in collection")
 }
+
+func AssertEquals[T comparable](t *testing.T, actual T, expected T) {
+	if actual != expected {
+		t.Fatalf("Expected value doesn't match actual")
+	}
+}

@@ -8,6 +8,7 @@ import (
 
 var (
 	unorderedQueryErr = errors.New("query must contain the order by clause to be paginated correctly")
+	DataNotFoundErr   = errors.New("requested data was not found in the database")
 )
 
 // paginate modifies completeQuery by appending required sql code to it to make pagination happen
@@ -48,4 +49,11 @@ func isStringNotEmpty(value string) bool {
 
 func makeLikeQuery(value string) string {
 	return fmt.Sprintf("%%%s%%", value)
+}
+
+func convertIfNotFoundErr(err error) error {
+	if err.Error() == "sql: no rows in result set" {
+		return DataNotFoundErr
+	}
+	return err
 }
