@@ -143,3 +143,33 @@ func TestGameRepository_AddGame_NewName_GameAdded(t *testing.T) {
 	mocks.AssertDefault(t, err)
 	mocks.AssertNotDefault(t, newGame.Id)
 }
+
+func TestGameRepository_UpdateGame_GameExists_Updates(t *testing.T) {
+	test := newGameRepoTest(t)
+	test.insertMockData()
+	modified := (*(test.mockData))[0]
+	modified.Title = "new title"
+	desc := "new description"
+	modified.Description = &desc
+	modified.Archived = true
+
+	err := test.repo.UpdateGame(modified.Id, &modified)
+
+	mocks.AssertDefault(t, err)
+	loaded, _ := test.repo.GetGameById(modified.Id)
+	mocks.AssertEquals(t, loaded.Id, modified.Id)
+	mocks.AssertEquals(t, loaded.Title, modified.Title)
+	mocks.AssertEquals(t, *loaded.Description, *modified.Description)
+	mocks.AssertEquals(t, loaded.Archived, modified.Archived)
+}
+
+func TestGameRepository_UpdateGame_GameMissing_ReturnsNotFound(t *testing.T) {
+	test := newGameRepoTest(t)
+	test.insertMockData()
+	fakeId, _ := uuid.NewV4()
+	modified := (*(test.mockData))[0]
+
+	err := test.repo.UpdateGame(fakeId, &modified)
+
+	mocks.AssertEquals(t, err, DataNotFoundErr)
+}
