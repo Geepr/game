@@ -3,12 +3,14 @@ package repositories
 import (
 	"errors"
 	"fmt"
+	"github.com/lib/pq"
 	"strings"
 )
 
 var (
 	unorderedQueryErr = errors.New("query must contain the order by clause to be paginated correctly")
 	DataNotFoundErr   = errors.New("requested data was not found in the database")
+	DuplicateDataErr  = errors.New("this data already exists")
 )
 
 // paginate modifies completeQuery by appending required sql code to it to make pagination happen
@@ -56,4 +58,12 @@ func convertIfNotFoundErr(err error) error {
 		return DataNotFoundErr
 	}
 	return err
+}
+
+func convertIfDuplicateErr(err error) error {
+	var pgErr *pq.Error
+	if err == nil || !errors.As(err, &pgErr) || pgErr.Code != "23505" {
+		return err
+	}
+	return DuplicateDataErr
 }
