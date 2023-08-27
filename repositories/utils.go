@@ -3,6 +3,7 @@ package repositories
 import (
 	"errors"
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/lib/pq"
 	"strings"
 )
@@ -11,6 +12,8 @@ var (
 	unorderedQueryErr = errors.New("query must contain the order by clause to be paginated correctly")
 	DataNotFoundErr   = errors.New("requested data was not found in the database")
 	DuplicateDataErr  = errors.New("this data already exists")
+
+	DefaultUuid uuid.UUID
 )
 
 // paginate modifies completeQuery by appending required sql code to it to make pagination happen
@@ -49,12 +52,21 @@ func isStringNotEmpty(value string) bool {
 	return value != "" && value != "%%"
 }
 
+func isUuidNotEmpty(value uuid.UUID) bool {
+	var defaultUuid uuid.UUID
+	return value != defaultUuid
+}
+
 func makeLikeQuery(value string) string {
 	return fmt.Sprintf("%%%s%%", value)
 }
 
 func convertIfNotFoundErr(err error) error {
 	if err.Error() == "sql: no rows in result set" {
+		return DataNotFoundErr
+	}
+	var pgErr *pq.Error
+	if errors.As(err, &pgErr) && pgErr.Code == "23503" {
 		return DataNotFoundErr
 	}
 	return err

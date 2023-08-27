@@ -36,3 +36,25 @@ func AssertEquals[T comparable](t *testing.T, actual T, expected T) {
 		t.Fatalf("Expected value doesn't match actual")
 	}
 }
+
+func AssertEqualsNillable[T comparable](t *testing.T, actual *T, expected *T) {
+	if (actual == nil && expected != nil) || (actual != nil && expected == nil) {
+		t.Fatalf("Expected value doesn't match actual")
+	}
+	if actual == expected {
+		return
+	}
+	if *actual != *expected {
+		t.Fatalf("Expected value doesn't match actual")
+	}
+}
+
+func CompareNillable[T comparable](left *T, right *T) bool {
+	if left == nil {
+		return right == nil
+	}
+	if right == nil {
+		return left == nil
+	}
+	return *left == *right
+}
