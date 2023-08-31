@@ -5,6 +5,7 @@ import (
 	"github.com/Geepr/game/models"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -44,6 +45,7 @@ func (repo *PlatformRepository) AddPlatform(platform *models.Platform) error {
 	query := "insert into platforms (name, short_name) VALUES ($1, $2) returning id"
 	result, err := repo.connector.QueryRow(query, platform.Name, platform.ShortName)
 	if err != nil {
+		log.Warnf("Failed to execute insert query on platforms table: %s", err.Error())
 		return convertIfDuplicateErr(err)
 	}
 	if err = result.Scan(&platform.Id); err != nil {
@@ -61,6 +63,7 @@ func (repo *PlatformRepository) UpdatePlatform(id uuid.UUID, updatedPlatform *mo
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
+		log.Warnf("Failed to get affected rows count when running update query on platgorms table: %s", err.Error())
 		return err
 	}
 	if affected != 1 {
@@ -73,10 +76,12 @@ func (repo *PlatformRepository) DeletePlatform(id uuid.UUID) error {
 	query := "delete from platforms where id = $1"
 	result, err := repo.connector.Exec(query, id)
 	if err != nil {
+		log.Warnf("Failed to execute delete query on platforms table: %s", err.Error())
 		return err
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
+		log.Warnf("Failed to get affected rows count when running delete query on platforms table: %s", err.Error())
 		return err
 	}
 	if affected != 1 {
@@ -88,6 +93,7 @@ func (repo *PlatformRepository) DeletePlatform(id uuid.UUID) error {
 func (repo *PlatformRepository) scanPlatforms(sql string, args ...interface{}) (*[]*models.Platform, error) {
 	result, err := repo.connector.QueryRows(sql, args...)
 	if err != nil {
+		log.Warnf("Failed to run query on platforms table: %s", err.Error())
 		return nil, err
 	}
 	defer result.Close()
@@ -107,6 +113,7 @@ func (repo *PlatformRepository) scanPlatforms(sql string, args ...interface{}) (
 func (repo *PlatformRepository) scanPlatform(sql string, args ...interface{}) (*models.Platform, error) {
 	result, err := repo.connector.QueryRow(sql, args...)
 	if err != nil {
+		log.Warnf("Failed to run query on platforms table: %s", err.Error())
 		return nil, err
 	}
 	return repo.scanRow(result)

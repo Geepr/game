@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -20,6 +21,7 @@ var (
 // note that pageIndex is in "user" understandable format, as in it starts with 1
 func paginate(completeQuery string, pageIndex int, pageSize int) (string, error) {
 	if !strings.Contains(completeQuery, "order by") {
+		log.Warnf("Unable to add pagination to query %s as it does not contain an order by clause", completeQuery)
 		return "", unorderedQueryErr
 	}
 	if pageIndex < 1 {
@@ -69,12 +71,14 @@ func convertIfNotFoundErr(err error) error {
 	if errors.As(err, &pgErr) && pgErr.Code == "23503" {
 		return DataNotFoundErr
 	}
+	log.Warnf("Expected error to be data not found, but failed to validate it as such: %s", err.Error())
 	return err
 }
 
 func convertIfDuplicateErr(err error) error {
 	var pgErr *pq.Error
 	if err == nil || !errors.As(err, &pgErr) || pgErr.Code != "23505" {
+		log.Warnf("Expected error to be duplicate data, but failed to validate it as such: %s", err.Error())
 		return err
 	}
 	return DuplicateDataErr
