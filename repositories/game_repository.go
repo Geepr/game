@@ -5,6 +5,7 @@ import (
 	"github.com/Geepr/game/models"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -43,6 +44,7 @@ func (repo *GameRepository) AddGame(game *models.Game) error {
 	query := "insert into games (title, description, archived) VALUES ($1, $2, $3) returning id"
 	result, err := repo.connector.QueryRow(query, game.Title, game.Description, game.Archived)
 	if err != nil {
+		log.Warnf("Failed to execute insert query on games table: %s", err.Error())
 		return err
 	}
 	if err = result.Scan(&game.Id); err != nil {
@@ -56,10 +58,12 @@ func (repo *GameRepository) UpdateGame(id uuid.UUID, updatedGame *models.Game) e
 	result, err := repo.connector.Exec(query, id, updatedGame.Title, updatedGame.Description, updatedGame.Archived)
 
 	if err != nil {
+		log.Warnf("Failed to execute update query on games table: %s", err.Error())
 		return err
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
+		log.Warnf("Failed to get affected rows count when running update query on games table: %s", err.Error())
 		return err
 	}
 	if affected != 1 {
@@ -72,10 +76,12 @@ func (repo *GameRepository) DeleteGame(id uuid.UUID) error {
 	query := "delete from games where id = $1"
 	result, err := repo.connector.Exec(query, id)
 	if err != nil {
+		log.Warnf("Failed to execute delete query on games table: %s", err.Error())
 		return err
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
+		log.Warnf("Failed to get affected rows count when running delete query on games table: %s", err.Error())
 		return err
 	}
 	if affected != 1 {
@@ -87,6 +93,7 @@ func (repo *GameRepository) DeleteGame(id uuid.UUID) error {
 func (repo *GameRepository) scanGames(sql string, args ...interface{}) (*[]*models.Game, error) {
 	result, err := repo.connector.QueryRows(sql, args...)
 	if err != nil {
+		log.Warnf("Failed to run query on games table: %s", err.Error())
 		return nil, err
 	}
 	defer result.Close()
@@ -106,6 +113,7 @@ func (repo *GameRepository) scanGames(sql string, args ...interface{}) (*[]*mode
 func (repo *GameRepository) scanGame(sql string, args ...interface{}) (*models.Game, error) {
 	result, err := repo.connector.QueryRow(sql, args...)
 	if err != nil {
+		log.Warnf("Failed to run query on games table: %s", err.Error())
 		return nil, err
 	}
 	return repo.scanRow(result)

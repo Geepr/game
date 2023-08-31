@@ -5,6 +5,7 @@ import (
 	"github.com/Geepr/game/models"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -58,10 +59,12 @@ func (repo *GameReleaseRepository) UpdateGameRelease(id uuid.UUID, updatedGameRe
 	result, err := repo.connector.Exec(query, id, updatedGameRelease.TitleOverride, updatedGameRelease.Description, updatedGameRelease.ReleaseDate, updatedGameRelease.ReleaseDateUnknown)
 
 	if err != nil {
+		log.Warnf("Failed to execute update query on game releases: %s", err.Error())
 		return err
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
+		log.Warnf("Failed to read affected rows when running update query on game releases: %s", err.Error())
 		return err
 	}
 	if affected != 1 {
@@ -74,10 +77,12 @@ func (repo *GameReleaseRepository) DeleteGameRelease(id uuid.UUID) error {
 	query := "delete from game_releases where id = $1"
 	result, err := repo.connector.Exec(query, id)
 	if err != nil {
+		log.Warnf("Failed to execute delete query on game releases: %s", err.Error())
 		return err
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
+		log.Warnf("Failed to read affected rows when running delete query on game releases: %s", err.Error())
 		return err
 	}
 	if affected != 1 {
@@ -89,6 +94,7 @@ func (repo *GameReleaseRepository) DeleteGameRelease(id uuid.UUID) error {
 func (repo *GameReleaseRepository) scanGameReleases(sql string, args ...interface{}) (*[]*models.GameRelease, error) {
 	result, err := repo.connector.QueryRows(sql, args...)
 	if err != nil {
+		log.Warnf("Failed to run query on game releases: %s", err.Error())
 		return nil, err
 	}
 	defer result.Close()
@@ -108,6 +114,7 @@ func (repo *GameReleaseRepository) scanGameReleases(sql string, args ...interfac
 func (repo *GameReleaseRepository) scanGameRelease(sql string, args ...interface{}) (*models.GameRelease, error) {
 	result, err := repo.connector.QueryRow(sql, args...)
 	if err != nil {
+		log.Warnf("Failed to run row query on game releases: %s", err.Error())
 		return nil, err
 	}
 	return repo.scanRow(result)
