@@ -19,8 +19,29 @@ func CreatePlatformRepository() *PlatformRepository {
 	return platformRepository
 }
 
+func CreateGameRepository() *GameRepository {
+	connector := gotabase.GetConnection()
+	gameRepository := NewGameRepository(connector)
+	return gameRepository
+}
+
+func CreateGameReleaseRepository() *GameReleaseRepository {
+	connector := gotabase.GetConnection()
+	gameReleaseRepository := NewGameReleaseRepository(connector)
+	return gameReleaseRepository
+}
+
+func CreateGameReleasePlatformRepository() *GameReleasePlatformRepository {
+	connector := gotabase.GetConnection()
+	gameReleasePlatformRepository := NewGameReleasePlatformRepository(connector)
+	return gameReleasePlatformRepository
+}
+
 // repositories_wire.go:
 
 var (
-	PlatformRepositorySet = wire.NewSet(NewPlatformRepository)
+	PlatformRepositorySet            = wire.NewSet(NewPlatformRepository)
+	GameRepositorySet                = wire.NewSet(NewGameRepository)
+	GameReleaseRepositorySet         = wire.NewSet(NewGameReleaseRepository)
+	GameReleasePlatformRepositorySet = wire.NewSet(NewGameReleasePlatformRepository)
 )
