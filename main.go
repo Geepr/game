@@ -43,8 +43,11 @@ func setupEngine() *gin.Engine {
 	//todo: trusted proxies
 
 	//todo: base path config
+	basePath := ""
 	gameController := controllers.CreateGameController()
-	gameController.SetupRoutes(router, "")
+	gameController.SetupRoutes(router, basePath)
+	platformController := controllers.CreatePlatformController()
+	platformController.SetupRoutes(router, basePath)
 
 	return router
 }
