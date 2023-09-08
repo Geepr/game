@@ -33,7 +33,7 @@ func (repo *GameReleasePlatformRepository) AddReleasePlatform(releaseId uuid.UUI
 	return nil
 }
 
-func (repo *GameReleaseRepository) RemoveReleasePlatform(releaseId uuid.UUID, platformId uuid.UUID) error {
+func (repo *GameReleasePlatformRepository) RemoveReleasePlatform(releaseId uuid.UUID, platformId uuid.UUID) error {
 	result, err := repo.connector.Exec("delete from game_release_platforms where platform_id = $1 and game_release_id = $2", platformId, releaseId)
 	if err != nil {
 		log.Warnf("Failed to execute query to remove release platform from the database: %s", err.Error())
