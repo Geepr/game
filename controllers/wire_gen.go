@@ -35,10 +35,18 @@ func CreateGameReleaseController() *GameReleaseController {
 	return gameReleaseController
 }
 
+func CreateGameReleasePlatformController() *GameReleasePlatformController {
+	connector := gotabase.GetConnection()
+	gameReleasePlatformRepository := repositories.NewGameReleasePlatformRepository(connector)
+	gameReleasePlatformController := NewGameReleasePlatformController(gameReleasePlatformRepository)
+	return gameReleasePlatformController
+}
+
 // controllers_wire.go:
 
 var (
-	GameControllerSet        = wire.NewSet(NewGameController, repositories.GameRepositorySet)
-	PlatformControllerSet    = wire.NewSet(NewPlatformController, repositories.PlatformRepositorySet)
-	GameReleaseControllerSet = wire.NewSet(NewGameReleaseController, repositories.GameReleaseRepositorySet)
+	GameControllerSet                = wire.NewSet(NewGameController, repositories.GameRepositorySet)
+	PlatformControllerSet            = wire.NewSet(NewPlatformController, repositories.PlatformRepositorySet)
+	GameReleaseControllerSet         = wire.NewSet(NewGameReleaseController, repositories.GameReleaseRepositorySet)
+	GameReleasePlatformControllerSet = wire.NewSet(NewGameReleasePlatformController, repositories.GameReleasePlatformRepositorySet)
 )

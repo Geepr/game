@@ -50,6 +50,8 @@ func setupEngine() *gin.Engine {
 	platformController.SetupRoutes(router, basePath)
 	releaseController := controllers.CreateGameReleaseController()
 	releaseController.SetupRoutes(router, basePath)
+	releasePlatformController := controllers.CreateGameReleasePlatformController()
+	releasePlatformController.SetupRoutes(router, basePath)
 
 	return router
 }
