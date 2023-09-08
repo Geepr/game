@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	GameControllerSet     = wire.NewSet(NewGameController, repositories.GameRepositorySet)
-	PlatformControllerSet = wire.NewSet(NewPlatformController, repositories.PlatformRepositorySet)
+	GameControllerSet        = wire.NewSet(NewGameController, repositories.GameRepositorySet)
+	PlatformControllerSet    = wire.NewSet(NewPlatformController, repositories.PlatformRepositorySet)
+	GameReleaseControllerSet = wire.NewSet(NewGameReleaseController, repositories.GameReleaseRepositorySet)
 )
 
 func CreateGameController() *GameController {
@@ -21,5 +22,10 @@ func CreateGameController() *GameController {
 
 func CreatePlatformController() *PlatformController {
 	wire.Build(gotabase.GetConnection, PlatformControllerSet)
+	return nil
+}
+
+func CreateGameReleaseController() *GameReleaseController {
+	wire.Build(gotabase.GetConnection, GameReleaseControllerSet)
 	return nil
 }
