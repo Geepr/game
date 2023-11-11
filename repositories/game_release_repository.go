@@ -31,7 +31,7 @@ func (repo *GameReleaseRepository) GetGameReleases(titleQuery string, gameIdQuer
 	query, args := appendWhereClause(query, "title_override_normalised", "like", makeLikeQuery(strings.ToUpper(titleQuery)), isStringNotEmpty, []any{})
 	query, args = appendWhereClause(query, "game_id", "=", gameIdQuery, isUuidNotEmpty, args)
 	query += fmt.Sprintf(" order by %s", order.getSqlColumnName())
-	query, err := paginate(query, pageIndex, pageSize)
+	query, _, err := paginate(query, pageIndex, pageSize)
 	if err != nil {
 		return nil, err
 	}

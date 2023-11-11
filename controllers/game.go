@@ -23,7 +23,7 @@ func (g *GameController) Get(c *gin.Context) {
 	var query struct {
 		Title     string                     `form:"title"`
 		SortOrder repositories.GameSortOrder `form:"order"`
-		PageIndex int                        `form:"index"`
+		PageIndex int                        `form:"page"`
 		PageSize  int                        `form:"size"`
 	}
 	if err := c.BindQuery(&query); err != nil {
@@ -32,13 +32,24 @@ func (g *GameController) Get(c *gin.Context) {
 		return
 	}
 
-	games, err := g.repo.GetGames(query.Title, query.PageIndex, query.PageSize, query.SortOrder)
+	games, totalItems, err := g.repo.GetGames(query.Title, query.PageIndex, query.PageSize, query.SortOrder)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, games)
+	response := struct {
+		Games      *[]*models.Game `json:"games"`
+		Page       int             `json:"page"`
+		PageSize   int             `json:"pageSize"`
+		TotalPages int             `json:"totalPages"`
+	}{
+		Games:      games,
+		Page:       query.PageIndex,
+		PageSize:   query.PageSize,
+		TotalPages: getPagesFromItems(totalItems, query.PageSize),
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func (g *GameController) GetById(c *gin.Context) {
