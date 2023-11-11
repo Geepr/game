@@ -26,6 +26,8 @@ func paginate(completeQuery string, pageIndex int, pageSize int) (query string, 
 		log.Warnf("Unable to add pagination to query %s as it does not contain an order by clause", completeQuery)
 		return "", "", unorderedQueryErr
 	}
+	//todo: this breaks things, as it's expected for the page size to be as passed
+	//return error or handle that on the higher level somewhere
 	if pageIndex < 1 {
 		pageIndex = 1
 	}
