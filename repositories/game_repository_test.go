@@ -66,9 +66,10 @@ func TestGameRepository_GetGames_NoParametersSet_ReturnsAllGames(t *testing.T) {
 	test := newGameRepoTest(t)
 	test.insertMockData()
 
-	result, err := test.repo.GetGames("", 0, 100, GameId)
+	result, count, err := test.repo.GetGames("", 0, 100, GameId)
 
 	mocks.AssertDefault(t, err)
+	mocks.AssertEquals(t, count, 4)
 	mocks.AssertCountEqual(t, *result, 4)
 	for _, game := range *test.mockData {
 		mocks.AssertArrayContains(t, *result, func(value *models.Game) bool {
@@ -81,10 +82,11 @@ func TestGameRepository_GetGames_TitleQueryDefined_ReturnsMatching(t *testing.T)
 	test := newGameRepoTest(t)
 	test.insertMockData()
 
-	result, err := test.repo.GetGames("Aa", 0, 100, GameId)
+	result, count, err := test.repo.GetGames("Aa", 0, 100, GameId)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, *result, 2)
+	mocks.AssertEquals(t, count, 2)
 	for _, game := range *test.mockData {
 		if !strings.Contains(game.Title, "aa") {
 			continue
@@ -99,10 +101,11 @@ func TestGameRepository_GetGames_TitleQueryDefinedAndNotFound_ReturnsEmpty(t *te
 	test := newGameRepoTest(t)
 	test.insertMockData()
 
-	result, err := test.repo.GetGames("definitely not found", 0, 100, GameId)
+	result, count, err := test.repo.GetGames("definitely not found", 0, 100, GameId)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, *result, 0)
+	mocks.AssertEquals(t, count, 0)
 }
 
 func TestGameRepository_GetGameById_GameIdValid_GameReturned(t *testing.T) {
