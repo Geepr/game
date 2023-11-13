@@ -24,15 +24,20 @@ const (
 	GameTitle
 )
 
-func (repo *GameRepository) GetGames(titleQuery string, pageIndex int, pageSize int, order GameSortOrder) (*[]*models.Game, error) {
+func (repo *GameRepository) GetGames(titleQuery string, pageIndex int, pageSize int, order GameSortOrder) (*[]*models.Game, int, error) {
 	query := "select id, title, description, archived from games"
 	query, args := appendWhereClause(query, "title_normalised", "like", makeLikeQuery(strings.ToUpper(titleQuery)), isStringNotEmpty, []any{})
 	query += fmt.Sprintf(" order by %s", order.getSqlColumnName())
-	query, err := paginate(query, pageIndex, pageSize)
+	query, countQuery, err := paginate(query, pageIndex, pageSize)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return repo.scanGames(query, args...)
+	countResults, err := scanCountQuery(repo.connector, countQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	results, err := repo.scanGames(query, args...)
+	return results, countResults, err
 }
 
 func (repo *GameRepository) GetGameById(id uuid.UUID) (*models.Game, error) {

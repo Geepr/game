@@ -40,3 +40,10 @@ func abortWithRelevantError(err error, c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 }
+
+func getPagesFromItems(totalItems int, pageSize int) int {
+	if totalItems%pageSize == 0 {
+		return totalItems / pageSize
+	}
+	return (totalItems / pageSize) + 1
+}

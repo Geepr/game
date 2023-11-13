@@ -3,9 +3,11 @@ package repositories
 import (
 	"errors"
 	"fmt"
+	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
+	"regexp"
 	"strings"
 )
 
@@ -19,11 +21,13 @@ var (
 
 // paginate modifies completeQuery by appending required sql code to it to make pagination happen
 // note that pageIndex is in "user" understandable format, as in it starts with 1
-func paginate(completeQuery string, pageIndex int, pageSize int) (string, error) {
+func paginate(completeQuery string, pageIndex int, pageSize int) (query string, countQuery string, err error) {
 	if !strings.Contains(completeQuery, "order by") {
 		log.Warnf("Unable to add pagination to query %s as it does not contain an order by clause", completeQuery)
-		return "", unorderedQueryErr
+		return "", "", unorderedQueryErr
 	}
+	//todo: this breaks things, as it's expected for the page size to be as passed
+	//return error or handle that on the higher level somewhere
 	if pageIndex < 1 {
 		pageIndex = 1
 	}
@@ -32,7 +36,9 @@ func paginate(completeQuery string, pageIndex int, pageSize int) (string, error)
 	}
 
 	offset := pageSize * (pageIndex - 1)
-	return fmt.Sprintf("%s offset %d limit %d", completeQuery, offset, pageSize), nil
+	replaceRegex := regexp.MustCompile("select .* from")
+	trimRegex := regexp.MustCompile("order by .*")
+	return fmt.Sprintf("%s offset %d limit %d", completeQuery, offset, pageSize), trimRegex.ReplaceAllString(replaceRegex.ReplaceAllString(completeQuery, "select count(*) from"), ""), nil
 }
 
 func appendWhereClause[T any](currentQuery string, columnName string, operand string, value T, isSet func(T) bool, positionalValues []any) (newQuery string, newPositional []any) {
@@ -82,4 +88,17 @@ func convertIfDuplicateErr(err error) error {
 		return err
 	}
 	return DuplicateDataErr
+}
+
+func scanCountQuery(connector gotabase.Connector, query string, args ...interface{}) (int, error) {
+	result, err := connector.QueryRow(query, args...)
+	if err != nil {
+		log.Warnf("Failed to run counting query: %s", err.Error())
+		return -1, err
+	}
+	var count int
+	if err := result.Scan(&count); err != nil {
+		return -1, convertIfNotFoundErr(err)
+	}
+	return count, nil
 }

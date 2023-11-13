@@ -29,7 +29,7 @@ func (repo *PlatformRepository) GetPlatforms(nameQuery string, pageIndex int, pa
 	query := "select id, name, short_name from platforms"
 	query, args := appendWhereClause(query, "name_normalised", "like", makeLikeQuery(strings.ToUpper(nameQuery)), isStringNotEmpty, []any{})
 	query += fmt.Sprintf(" order by %s", order.getSqlColumnName())
-	query, err := paginate(query, pageIndex, pageSize)
+	query, _, err := paginate(query, pageIndex, pageSize)
 	if err != nil {
 		return nil, err
 	}
