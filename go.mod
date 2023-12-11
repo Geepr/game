@@ -3,7 +3,7 @@ module github.com/Geepr/game
 go 1.21.0
 
 require (
-	github.com/KowalskiPiotr98/gotabase v0.1.3
+	github.com/KowalskiPiotr98/gotabase v0.2.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/wire v0.5.0
