@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"github.com/Geepr/game/repositories"
+	"github.com/Geepr/game/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/gofrs/uuid"
@@ -21,7 +22,7 @@ func NewGameReleasePlatformController(repo *repositories.GameReleasePlatformRepo
 }
 
 func (g *GameReleasePlatformController) GetByReleaseId(c *gin.Context) {
-	id, err := parseUuidFromParam(c)
+	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -29,7 +30,7 @@ func (g *GameReleasePlatformController) GetByReleaseId(c *gin.Context) {
 
 	result, err := g.repo.GetPlatformIdsForRelease(id)
 	if err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 
@@ -37,7 +38,7 @@ func (g *GameReleasePlatformController) GetByReleaseId(c *gin.Context) {
 }
 
 func (g *GameReleasePlatformController) GetByPlatformId(c *gin.Context) {
-	id, err := parseUuidFromParam(c)
+	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -45,7 +46,7 @@ func (g *GameReleasePlatformController) GetByPlatformId(c *gin.Context) {
 
 	result, err := g.repo.GetReleaseIdsForPlatforms(id)
 	if err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 
@@ -63,7 +64,7 @@ func (g *GameReleasePlatformController) Create(c *gin.Context) {
 	}
 
 	if err := g.repo.AddReleasePlatform(createModel.ReleaseId, createModel.PlatformId); err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 
@@ -81,7 +82,7 @@ func (g *GameReleasePlatformController) Delete(c *gin.Context) {
 	}
 
 	if err := g.repo.RemoveReleasePlatform(createModel.ReleaseId, createModel.PlatformId); err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 

@@ -10,18 +10,12 @@ import (
 
 var (
 	PlatformRepositorySet            = wire.NewSet(NewPlatformRepository)
-	GameRepositorySet                = wire.NewSet(NewGameRepository)
 	GameReleaseRepositorySet         = wire.NewSet(NewGameReleaseRepository)
 	GameReleasePlatformRepositorySet = wire.NewSet(NewGameReleasePlatformRepository)
 )
 
 func CreatePlatformRepository() *PlatformRepository {
 	wire.Build(gotabase.GetConnection, PlatformRepositorySet)
-	return nil
-}
-
-func CreateGameRepository() *GameRepository {
-	wire.Build(gotabase.GetConnection, GameRepositorySet)
 	return nil
 }
 

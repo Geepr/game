@@ -3,6 +3,7 @@ package repositories
 import (
 	"github.com/Geepr/game/mocks"
 	"github.com/Geepr/game/models"
+	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
 	"strings"
@@ -129,7 +130,7 @@ func TestPlatformRepository_GetPlatformById_PlatformIdNotFound_ReturnsSpecificEr
 
 	_, err := test.repo.GetPlatformById(testId)
 
-	mocks.AssertEquals(t, err, DataNotFoundErr)
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }
 
 func TestPlatformRepository_AddPlatform_ValidNewPlatform_PlatformAdded(t *testing.T) {
@@ -157,7 +158,7 @@ func TestPlatformRepository_AddPlatform_DuplicateName_ErrorReturned(t *testing.T
 
 	err := test.repo.AddPlatform(&duplicate)
 
-	mocks.AssertEquals(t, err, DuplicateDataErr)
+	mocks.AssertEquals(t, err, utils.DuplicateDataErr)
 }
 
 func TestPlatformRepository_UpdatePlatform_PlatformExists_Updates(t *testing.T) {
@@ -186,7 +187,7 @@ func TestPlatformRepository_UpdatePlatform_NewNameDuplicate_ReturnsErr(t *testin
 
 	err := test.repo.UpdatePlatform(modified.Id, &modified)
 
-	mocks.AssertEquals(t, err, DuplicateDataErr)
+	mocks.AssertEquals(t, err, utils.DuplicateDataErr)
 }
 
 func TestPlatformRepository_UpdatePlatform_PlatformMissing_ReturnsNotFound(t *testing.T) {
@@ -197,7 +198,7 @@ func TestPlatformRepository_UpdatePlatform_PlatformMissing_ReturnsNotFound(t *te
 
 	err := test.repo.UpdatePlatform(fakeId, &modified)
 
-	mocks.AssertEquals(t, err, DataNotFoundErr)
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }
 
 func TestPlatformRepository_DeletePlatform_PlatformExists_RemovesPlatform(t *testing.T) {
@@ -209,7 +210,7 @@ func TestPlatformRepository_DeletePlatform_PlatformExists_RemovesPlatform(t *tes
 
 	mocks.AssertDefault(t, err)
 	_, err = test.repo.GetPlatformById(toDelete.Id)
-	mocks.AssertEquals(t, err, DataNotFoundErr)
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }
 
 func TestPlatformRepository_DeletePlatform_MissingId_ReturnsNotFound(t *testing.T) {
@@ -219,5 +220,5 @@ func TestPlatformRepository_DeletePlatform_MissingId_ReturnsNotFound(t *testing.
 
 	err := test.repo.DeletePlatform(fakeId)
 
-	mocks.AssertEquals(t, err, DataNotFoundErr)
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }

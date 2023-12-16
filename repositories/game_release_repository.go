@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"github.com/Geepr/game/models"
+	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
@@ -28,10 +29,10 @@ const (
 func (repo *GameReleaseRepository) GetGameReleases(titleQuery string, gameIdQuery uuid.UUID, pageIndex int, pageSize int, order GameReleaseSortOrder) (*[]*models.GameRelease, error) {
 	query := "select id, game_id, title_override, description, release_date, release_date_unknown from game_releases"
 	//todo: this should probably fallback to the original game title query if override is null? - a view of some manner would be helpful here
-	query, args := appendWhereClause(query, "title_override_normalised", "like", makeLikeQuery(strings.ToUpper(titleQuery)), isStringNotEmpty, []any{})
-	query, args = appendWhereClause(query, "game_id", "=", gameIdQuery, isUuidNotEmpty, args)
+	query, args := utils.AppendWhereClause(query, "title_override_normalised", "like", utils.MakeLikeQuery(strings.ToUpper(titleQuery)), utils.IsStringNotEmpty, []any{})
+	query, args = utils.AppendWhereClause(query, "game_id", "=", gameIdQuery, utils.IsUuidNotEmpty, args)
 	query += fmt.Sprintf(" order by %s", order.getSqlColumnName())
-	query, _, err := paginate(query, pageIndex, pageSize)
+	query, _, err := utils.Paginate(query, pageIndex, pageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +48,7 @@ func (repo *GameReleaseRepository) AddGameRelease(gameRelease *models.GameReleas
 	query := "insert into game_releases (game_id, title_override, description, release_date, release_date_unknown) VALUES  ($1, $2, $3, $4, $5) returning id"
 	result, err := repo.connector.QueryRow(query, gameRelease.GameId, gameRelease.TitleOverride, gameRelease.Description, gameRelease.ReleaseDate, gameRelease.ReleaseDateUnknown)
 	if err != nil {
-		return convertIfNotFoundErr(err)
+		return utils.ConvertIfNotFoundErr(err)
 	}
 	if err = result.Scan(&gameRelease.Id); err != nil {
 		return err
@@ -69,7 +70,7 @@ func (repo *GameReleaseRepository) UpdateGameRelease(id uuid.UUID, updatedGameRe
 		return err
 	}
 	if affected != 1 {
-		return DataNotFoundErr
+		return utils.DataNotFoundErr
 	}
 	return nil
 }
@@ -87,7 +88,7 @@ func (repo *GameReleaseRepository) DeleteGameRelease(id uuid.UUID) error {
 		return err
 	}
 	if affected != 1 {
-		return DataNotFoundErr
+		return utils.DataNotFoundErr
 	}
 	return nil
 }
@@ -124,7 +125,7 @@ func (repo *GameReleaseRepository) scanGameRelease(sql string, args ...interface
 func (repo *GameReleaseRepository) scanRow(row gotabase.Row) (*models.GameRelease, error) {
 	release := models.GameRelease{}
 	if err := row.Scan(&release.Id, &release.GameId, &release.TitleOverride, &release.Description, &release.ReleaseDate, &release.ReleaseDateUnknown); err != nil {
-		return nil, convertIfNotFoundErr(err)
+		return nil, utils.ConvertIfNotFoundErr(err)
 	}
 	return &release, nil
 }

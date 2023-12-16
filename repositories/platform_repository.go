@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"github.com/Geepr/game/models"
+	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
@@ -27,9 +28,9 @@ const (
 
 func (repo *PlatformRepository) GetPlatforms(nameQuery string, pageIndex int, pageSize int, order PlatformSortOrder) (*[]*models.Platform, error) {
 	query := "select id, name, short_name from platforms"
-	query, args := appendWhereClause(query, "name_normalised", "like", makeLikeQuery(strings.ToUpper(nameQuery)), isStringNotEmpty, []any{})
+	query, args := utils.AppendWhereClause(query, "name_normalised", "like", utils.MakeLikeQuery(strings.ToUpper(nameQuery)), utils.IsStringNotEmpty, []any{})
 	query += fmt.Sprintf(" order by %s", order.getSqlColumnName())
-	query, _, err := paginate(query, pageIndex, pageSize)
+	query, _, err := utils.Paginate(query, pageIndex, pageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +47,7 @@ func (repo *PlatformRepository) AddPlatform(platform *models.Platform) error {
 	result, err := repo.connector.QueryRow(query, platform.Name, platform.ShortName)
 	if err != nil {
 		log.Warnf("Failed to execute insert query on platforms table: %s", err.Error())
-		return convertIfDuplicateErr(err)
+		return utils.ConvertIfDuplicateErr(err)
 	}
 	if err = result.Scan(&platform.Id); err != nil {
 		return err
@@ -59,7 +60,7 @@ func (repo *PlatformRepository) UpdatePlatform(id uuid.UUID, updatedPlatform *mo
 	result, err := repo.connector.Exec(query, id, updatedPlatform.Name, updatedPlatform.ShortName)
 
 	if err != nil {
-		return convertIfDuplicateErr(err)
+		return utils.ConvertIfDuplicateErr(err)
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
@@ -67,7 +68,7 @@ func (repo *PlatformRepository) UpdatePlatform(id uuid.UUID, updatedPlatform *mo
 		return err
 	}
 	if affected != 1 {
-		return DataNotFoundErr
+		return utils.DataNotFoundErr
 	}
 	return nil
 }
@@ -85,7 +86,7 @@ func (repo *PlatformRepository) DeletePlatform(id uuid.UUID) error {
 		return err
 	}
 	if affected != 1 {
-		return DataNotFoundErr
+		return utils.DataNotFoundErr
 	}
 	return nil
 }
@@ -122,7 +123,7 @@ func (repo *PlatformRepository) scanPlatform(sql string, args ...interface{}) (*
 func (repo *PlatformRepository) scanRow(row gotabase.Row) (*models.Platform, error) {
 	platform := models.Platform{}
 	if err := row.Scan(&platform.Id, &platform.Name, &platform.ShortName); err != nil {
-		return nil, convertIfNotFoundErr(err)
+		return nil, utils.ConvertIfNotFoundErr(err)
 	}
 	return &platform, nil
 }

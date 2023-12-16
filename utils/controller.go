@@ -1,8 +1,7 @@
-package controllers
+package utils
 
 import (
 	"errors"
-	"github.com/Geepr/game/repositories"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
@@ -13,7 +12,7 @@ type id struct {
 	Id string `form:"id" uri:"id" binding:"required,uuid"`
 }
 
-func parseUuidFromParam(c *gin.Context) (uuid.UUID, error) {
+func ParseUuidFromParam(c *gin.Context) (uuid.UUID, error) {
 	var id id
 	err := c.BindUri(&id)
 	if err != nil {
@@ -23,7 +22,7 @@ func parseUuidFromParam(c *gin.Context) (uuid.UUID, error) {
 	return uuid.FromString(id.Id)
 }
 
-func getNilIfDefault[T comparable](value T) *T {
+func GetNilIfDefault[T comparable](value T) *T {
 	var defaultValue T
 	if value == defaultValue {
 		return nil
@@ -31,17 +30,17 @@ func getNilIfDefault[T comparable](value T) *T {
 	return &value
 }
 
-func abortWithRelevantError(err error, c *gin.Context) {
-	if errors.Is(err, repositories.DuplicateDataErr) {
+func AbortWithRelevantError(err error, c *gin.Context) {
+	if errors.Is(err, DuplicateDataErr) {
 		c.AbortWithStatus(http.StatusBadRequest)
-	} else if errors.Is(err, repositories.DataNotFoundErr) {
+	} else if errors.Is(err, DataNotFoundErr) {
 		c.AbortWithStatus(http.StatusNotFound)
 	} else {
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 }
 
-func getPagesFromItems(totalItems int, pageSize int) int {
+func GetPagesFromItems(totalItems int, pageSize int) int {
 	if totalItems%pageSize == 0 {
 		return totalItems / pageSize
 	}

@@ -10,16 +10,10 @@ import (
 )
 
 var (
-	GameControllerSet                = wire.NewSet(NewGameController, repositories.GameRepositorySet)
 	PlatformControllerSet            = wire.NewSet(NewPlatformController, repositories.PlatformRepositorySet)
 	GameReleaseControllerSet         = wire.NewSet(NewGameReleaseController, repositories.GameReleaseRepositorySet)
 	GameReleasePlatformControllerSet = wire.NewSet(NewGameReleasePlatformController, repositories.GameReleasePlatformRepositorySet)
 )
-
-func CreateGameController() *GameController {
-	wire.Build(gotabase.GetConnection, GameControllerSet)
-	return nil
-}
 
 func CreatePlatformController() *PlatformController {
 	wire.Build(gotabase.GetConnection, PlatformControllerSet)

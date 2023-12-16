@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Geepr/game/models"
 	"github.com/Geepr/game/repositories"
+	"github.com/Geepr/game/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/gofrs/uuid"
@@ -45,7 +46,7 @@ func (g *GameReleaseController) Get(c *gin.Context) {
 }
 
 func (g *GameReleaseController) GetById(c *gin.Context) {
-	id, err := parseUuidFromParam(c)
+	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -53,7 +54,7 @@ func (g *GameReleaseController) GetById(c *gin.Context) {
 
 	release, err := g.repo.GetGameReleaseById(id)
 	if err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 
@@ -75,13 +76,13 @@ func (g *GameReleaseController) Create(c *gin.Context) {
 
 	release := models.GameRelease{
 		GameId:             createModel.GameId,
-		TitleOverride:      getNilIfDefault(createModel.TitleOverride),
-		Description:        getNilIfDefault(createModel.Description),
-		ReleaseDate:        getNilIfDefault(createModel.ReleaseDate),
+		TitleOverride:      utils.GetNilIfDefault(createModel.TitleOverride),
+		Description:        utils.GetNilIfDefault(createModel.Description),
+		ReleaseDate:        utils.GetNilIfDefault(createModel.ReleaseDate),
 		ReleaseDateUnknown: createModel.ReleaseDateUnknown,
 	}
 	if err := g.repo.AddGameRelease(&release); err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 
@@ -99,20 +100,20 @@ func (g *GameReleaseController) Update(c *gin.Context) {
 		log.Infof("Failed to parse release update model: %s", err.Error())
 		return
 	}
-	id, err := parseUuidFromParam(c)
+	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
 	release := models.GameRelease{
-		TitleOverride:      getNilIfDefault(updateModel.TitleOverride),
-		Description:        getNilIfDefault(updateModel.Description),
-		ReleaseDate:        getNilIfDefault(updateModel.ReleaseDate),
+		TitleOverride:      utils.GetNilIfDefault(updateModel.TitleOverride),
+		Description:        utils.GetNilIfDefault(updateModel.Description),
+		ReleaseDate:        utils.GetNilIfDefault(updateModel.ReleaseDate),
 		ReleaseDateUnknown: updateModel.ReleaseDateUnknown,
 	}
 	if err := g.repo.UpdateGameRelease(id, &release); err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 
@@ -121,14 +122,14 @@ func (g *GameReleaseController) Update(c *gin.Context) {
 }
 
 func (g *GameReleaseController) Delete(c *gin.Context) {
-	id, err := parseUuidFromParam(c)
+	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
 	if err := g.repo.DeleteGameRelease(id); err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 

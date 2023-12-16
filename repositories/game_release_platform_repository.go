@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
@@ -28,7 +29,7 @@ func (repo *GameReleasePlatformRepository) AddReleasePlatform(releaseId uuid.UUI
 	_, err := repo.connector.Exec("insert into game_release_platforms (platform_id, game_release_id) VALUES ($1, $2)", platformId, releaseId)
 	if err != nil {
 		log.Infof("Failed to add new release platform to database: %s", err.Error())
-		return convertIfNotFoundErr(convertIfDuplicateErr(err))
+		return utils.ConvertIfNotFoundErr(utils.ConvertIfDuplicateErr(err))
 	}
 	return nil
 }
@@ -45,7 +46,7 @@ func (repo *GameReleasePlatformRepository) RemoveReleasePlatform(releaseId uuid.
 		return err
 	}
 	if affected != 1 {
-		return DataNotFoundErr
+		return utils.DataNotFoundErr
 	}
 	return nil
 }

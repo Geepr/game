@@ -3,6 +3,7 @@ package repositories
 import (
 	"github.com/Geepr/game/mocks"
 	"github.com/Geepr/game/models"
+	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
 	"testing"
@@ -91,7 +92,7 @@ func TestGameReleaseRepository_GetReleases_NoParametersSet_ReturnsAllReleases(t 
 	test := newGameReleaseRepoTest(t)
 	test.insertMockData()
 
-	result, err := test.repo.GetGameReleases("", DefaultUuid, 0, 100, GameReleaseId)
+	result, err := test.repo.GetGameReleases("", utils.DefaultUuid, 0, 100, GameReleaseId)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, *result, 4)
@@ -122,7 +123,7 @@ func TestGameReleaseRepository_GetReleases_QueryDefinedAndNotFound_ReturnsEmpty(
 	test := newGameReleaseRepoTest(t)
 	test.insertMockData()
 
-	result, err := test.repo.GetGameReleases("definitely not found", DefaultUuid, 0, 100, GameReleaseId)
+	result, err := test.repo.GetGameReleases("definitely not found", utils.DefaultUuid, 0, 100, GameReleaseId)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, *result, 0)
@@ -152,7 +153,7 @@ func TestGameReleaseRepository_GetGameReleaseById_IdNotFound_ReturnsSpecificErro
 
 	_, err := test.repo.GetGameReleaseById(testId)
 
-	mocks.AssertEquals(t, err, DataNotFoundErr)
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }
 
 func TestGameReleaseRepository_AddRelease_New_ReleaseAdded(t *testing.T) {
@@ -182,7 +183,7 @@ func TestGameReleaseRepository_AddRelease_MissingGameId_NotFoundReturned(t *test
 
 	err := test.repo.AddGameRelease(&newRelease)
 
-	mocks.AssertEquals(t, err, DataNotFoundErr)
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }
 
 func TestGameReleaseRepository_UpdateRelease_Exists_Updates(t *testing.T) {
@@ -214,7 +215,7 @@ func TestGameReleaseRepository_UpdateRelease_Missing_ReturnsNotFound(t *testing.
 
 	err := test.repo.UpdateGameRelease(fakeId, &modified)
 
-	mocks.AssertEquals(t, err, DataNotFoundErr)
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }
 
 func TestGameReleaseRepository_DeleteRelease_Exists_Removes(t *testing.T) {
@@ -226,7 +227,7 @@ func TestGameReleaseRepository_DeleteRelease_Exists_Removes(t *testing.T) {
 
 	mocks.AssertDefault(t, err)
 	_, err = test.repo.GetGameReleaseById(toDelete.Id)
-	mocks.AssertEquals(t, err, DataNotFoundErr)
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }
 
 func TestGameReleaseRepository_DeleteGameRelease_MissingId_ReturnsNotFound(t *testing.T) {
@@ -236,5 +237,5 @@ func TestGameReleaseRepository_DeleteGameRelease_MissingId_ReturnsNotFound(t *te
 
 	err := test.repo.DeleteGameRelease(fakeId)
 
-	mocks.AssertEquals(t, err, DataNotFoundErr)
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }

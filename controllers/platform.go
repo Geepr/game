@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Geepr/game/models"
 	"github.com/Geepr/game/repositories"
+	"github.com/Geepr/game/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	log "github.com/sirupsen/logrus"
@@ -42,7 +43,7 @@ func (p *PlatformController) Get(c *gin.Context) {
 }
 
 func (p *PlatformController) GetById(c *gin.Context) {
-	id, err := parseUuidFromParam(c)
+	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -50,7 +51,7 @@ func (p *PlatformController) GetById(c *gin.Context) {
 
 	game, err := p.repo.GetPlatformById(id)
 	if err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 
@@ -72,7 +73,7 @@ func (p *PlatformController) Create(c *gin.Context) {
 		ShortName: createModel.ShortName,
 	}
 	if err := p.repo.AddPlatform(&platform); err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 
@@ -88,7 +89,7 @@ func (p *PlatformController) Update(c *gin.Context) {
 		log.Infof("Failed to parse platform creation model: %s", err.Error())
 		return
 	}
-	id, err := parseUuidFromParam(c)
+	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -99,7 +100,7 @@ func (p *PlatformController) Update(c *gin.Context) {
 		ShortName: updateModel.ShortName,
 	}
 	if err := p.repo.UpdatePlatform(id, &platform); err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 
@@ -108,14 +109,14 @@ func (p *PlatformController) Update(c *gin.Context) {
 }
 
 func (p *PlatformController) Delete(c *gin.Context) {
-	id, err := parseUuidFromParam(c)
+	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
 	if err := p.repo.DeletePlatform(id); err != nil {
-		abortWithRelevantError(err, c)
+		utils.AbortWithRelevantError(err, c)
 		return
 	}
 

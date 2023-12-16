@@ -1,4 +1,4 @@
-package repositories
+package utils
 
 import (
 	"errors"
@@ -19,9 +19,9 @@ var (
 	DefaultUuid uuid.UUID
 )
 
-// paginate modifies completeQuery by appending required sql code to it to make pagination happen
+// Paginate modifies completeQuery by appending required sql code to it to make pagination happen
 // note that pageIndex is in "user" understandable format, as in it starts with 1
-func paginate(completeQuery string, pageIndex int, pageSize int) (query string, countQuery string, err error) {
+func Paginate(completeQuery string, pageIndex int, pageSize int) (query string, countQuery string, err error) {
 	if !strings.Contains(completeQuery, "order by") {
 		log.Warnf("Unable to add pagination to query %s as it does not contain an order by clause", completeQuery)
 		return "", "", unorderedQueryErr
@@ -41,7 +41,7 @@ func paginate(completeQuery string, pageIndex int, pageSize int) (query string, 
 	return fmt.Sprintf("%s offset %d limit %d", completeQuery, offset, pageSize), trimRegex.ReplaceAllString(replaceRegex.ReplaceAllString(completeQuery, "select count(*) from"), ""), nil
 }
 
-func appendWhereClause[T any](currentQuery string, columnName string, operand string, value T, isSet func(T) bool, positionalValues []any) (newQuery string, newPositional []any) {
+func AppendWhereClause[T any](currentQuery string, columnName string, operand string, value T, isSet func(T) bool, positionalValues []any) (newQuery string, newPositional []any) {
 	if !isSet(value) {
 		return currentQuery, positionalValues
 	}
@@ -56,20 +56,20 @@ func appendWhereClause[T any](currentQuery string, columnName string, operand st
 	return
 }
 
-func isStringNotEmpty(value string) bool {
+func IsStringNotEmpty(value string) bool {
 	return value != "" && value != "%%"
 }
 
-func isUuidNotEmpty(value uuid.UUID) bool {
+func IsUuidNotEmpty(value uuid.UUID) bool {
 	var defaultUuid uuid.UUID
 	return value != defaultUuid
 }
 
-func makeLikeQuery(value string) string {
+func MakeLikeQuery(value string) string {
 	return fmt.Sprintf("%%%s%%", value)
 }
 
-func convertIfNotFoundErr(err error) error {
+func ConvertIfNotFoundErr(err error) error {
 	if err.Error() == "sql: no rows in result set" {
 		return DataNotFoundErr
 	}
@@ -81,7 +81,7 @@ func convertIfNotFoundErr(err error) error {
 	return err
 }
 
-func convertIfDuplicateErr(err error) error {
+func ConvertIfDuplicateErr(err error) error {
 	var pgErr *pq.Error
 	if err == nil || !errors.As(err, &pgErr) || pgErr.Code != "23505" {
 		log.Warnf("Expected error to be duplicate data, but failed to validate it as such: %s", err.Error())
@@ -90,7 +90,7 @@ func convertIfDuplicateErr(err error) error {
 	return DuplicateDataErr
 }
 
-func scanCountQuery(connector gotabase.Connector, query string, args ...interface{}) (int, error) {
+func ScanCountQuery(connector gotabase.Connector, query string, args ...interface{}) (int, error) {
 	result, err := connector.QueryRow(query, args...)
 	if err != nil {
 		log.Warnf("Failed to run counting query: %s", err.Error())
@@ -98,7 +98,7 @@ func scanCountQuery(connector gotabase.Connector, query string, args ...interfac
 	}
 	var count int
 	if err := result.Scan(&count); err != nil {
-		return -1, convertIfNotFoundErr(err)
+		return -1, ConvertIfNotFoundErr(err)
 	}
 	return count, nil
 }
