@@ -13,12 +13,6 @@ import (
 
 // Injectors from repositories_wire.go:
 
-func CreatePlatformRepository() *PlatformRepository {
-	connector := gotabase.GetConnection()
-	platformRepository := NewPlatformRepository(connector)
-	return platformRepository
-}
-
 func CreateGameReleaseRepository() *GameReleaseRepository {
 	connector := gotabase.GetConnection()
 	gameReleaseRepository := NewGameReleaseRepository(connector)
@@ -34,7 +28,6 @@ func CreateGameReleasePlatformRepository() *GameReleasePlatformRepository {
 // repositories_wire.go:
 
 var (
-	PlatformRepositorySet            = wire.NewSet(NewPlatformRepository)
 	GameReleaseRepositorySet         = wire.NewSet(NewGameReleaseRepository)
 	GameReleasePlatformRepositorySet = wire.NewSet(NewGameReleasePlatformRepository)
 )

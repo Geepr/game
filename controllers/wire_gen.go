@@ -14,13 +14,6 @@ import (
 
 // Injectors from controllers_wire.go:
 
-func CreatePlatformController() *PlatformController {
-	connector := gotabase.GetConnection()
-	platformRepository := repositories.NewPlatformRepository(connector)
-	platformController := NewPlatformController(platformRepository)
-	return platformController
-}
-
 func CreateGameReleaseController() *GameReleaseController {
 	connector := gotabase.GetConnection()
 	gameReleaseRepository := repositories.NewGameReleaseRepository(connector)
@@ -38,7 +31,6 @@ func CreateGameReleasePlatformController() *GameReleasePlatformController {
 // controllers_wire.go:
 
 var (
-	PlatformControllerSet            = wire.NewSet(NewPlatformController, repositories.PlatformRepositorySet)
 	GameReleaseControllerSet         = wire.NewSet(NewGameReleaseController, repositories.GameReleaseRepositorySet)
 	GameReleasePlatformControllerSet = wire.NewSet(NewGameReleasePlatformController, repositories.GameReleasePlatformRepositorySet)
 )

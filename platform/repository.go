@@ -1,8 +1,7 @@
-package repositories
+package platform
 
 import (
 	"fmt"
-	"github.com/Geepr/game/models"
 	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
@@ -10,23 +9,15 @@ import (
 	"strings"
 )
 
-type PlatformRepository struct {
-	connector gotabase.Connector
-}
-
-func NewPlatformRepository(connector gotabase.Connector) *PlatformRepository {
-	return &PlatformRepository{connector: connector}
-}
-
-type PlatformSortOrder uint8
+type SortOrder uint8
 
 const (
-	PlatformId PlatformSortOrder = iota
-	PlatformName
-	PlatformShortName
+	SortById SortOrder = iota
+	SortByName
+	SortByShortName
 )
 
-func (repo *PlatformRepository) GetPlatforms(nameQuery string, pageIndex int, pageSize int, order PlatformSortOrder) (*[]*models.Platform, error) {
+func getPlatforms(nameQuery string, pageIndex int, pageSize int, order SortOrder) ([]*Platform, error) {
 	query := "select id, name, short_name from platforms"
 	query, args := utils.AppendWhereClause(query, "name_normalised", "like", utils.MakeLikeQuery(strings.ToUpper(nameQuery)), utils.IsStringNotEmpty, []any{})
 	query += fmt.Sprintf(" order by %s", order.getSqlColumnName())
@@ -34,17 +25,17 @@ func (repo *PlatformRepository) GetPlatforms(nameQuery string, pageIndex int, pa
 	if err != nil {
 		return nil, err
 	}
-	return repo.scanPlatforms(query, args...)
+	return scanPlatforms(query, args...)
 }
 
-func (repo *PlatformRepository) GetPlatformById(id uuid.UUID) (*models.Platform, error) {
+func getPlatformById(id uuid.UUID) (*Platform, error) {
 	query := "select id, name, short_name from platforms where id = $1"
-	return repo.scanPlatform(query, id)
+	return scanPlatform(query, id)
 }
 
-func (repo *PlatformRepository) AddPlatform(platform *models.Platform) error {
+func addPlatform(platform *Platform) error {
 	query := "insert into platforms (name, short_name) VALUES ($1, $2) returning id"
-	result, err := repo.connector.QueryRow(query, platform.Name, platform.ShortName)
+	result, err := getConnector().QueryRow(query, platform.Name, platform.ShortName)
 	if err != nil {
 		log.Warnf("Failed to execute insert query on platforms table: %s", err.Error())
 		return utils.ConvertIfDuplicateErr(err)
@@ -55,9 +46,9 @@ func (repo *PlatformRepository) AddPlatform(platform *models.Platform) error {
 	return nil
 }
 
-func (repo *PlatformRepository) UpdatePlatform(id uuid.UUID, updatedPlatform *models.Platform) error {
+func updatePlatform(id uuid.UUID, updatedPlatform *Platform) error {
 	query := "update platforms set name = $2, short_name = $3 where id = $1"
-	result, err := repo.connector.Exec(query, id, updatedPlatform.Name, updatedPlatform.ShortName)
+	result, err := getConnector().Exec(query, id, updatedPlatform.Name, updatedPlatform.ShortName)
 
 	if err != nil {
 		return utils.ConvertIfDuplicateErr(err)
@@ -73,9 +64,9 @@ func (repo *PlatformRepository) UpdatePlatform(id uuid.UUID, updatedPlatform *mo
 	return nil
 }
 
-func (repo *PlatformRepository) DeletePlatform(id uuid.UUID) error {
+func deletePlatform(id uuid.UUID) error {
 	query := "delete from platforms where id = $1"
-	result, err := repo.connector.Exec(query, id)
+	result, err := getConnector().Exec(query, id)
 	if err != nil {
 		log.Warnf("Failed to execute delete query on platforms table: %s", err.Error())
 		return err
@@ -91,50 +82,50 @@ func (repo *PlatformRepository) DeletePlatform(id uuid.UUID) error {
 	return nil
 }
 
-func (repo *PlatformRepository) scanPlatforms(sql string, args ...interface{}) (*[]*models.Platform, error) {
-	result, err := repo.connector.QueryRows(sql, args...)
+func scanPlatforms(sql string, args ...interface{}) ([]*Platform, error) {
+	result, err := getConnector().QueryRows(sql, args...)
 	if err != nil {
 		log.Warnf("Failed to run query on platforms table: %s", err.Error())
 		return nil, err
 	}
 	defer result.Close()
 
-	platforms := make([]*models.Platform, 0)
+	platforms := make([]*Platform, 0)
 	for result.Next() {
-		platform, err := repo.scanRow(result)
+		platform, err := scanRow(result)
 		if err != nil {
 			return nil, err
 		}
 		platforms = append(platforms, platform)
 	}
 
-	return &platforms, nil
+	return platforms, nil
 }
 
-func (repo *PlatformRepository) scanPlatform(sql string, args ...interface{}) (*models.Platform, error) {
-	result, err := repo.connector.QueryRow(sql, args...)
+func scanPlatform(sql string, args ...interface{}) (*Platform, error) {
+	result, err := getConnector().QueryRow(sql, args...)
 	if err != nil {
 		log.Warnf("Failed to run query on platforms table: %s", err.Error())
 		return nil, err
 	}
-	return repo.scanRow(result)
+	return scanRow(result)
 }
 
-func (repo *PlatformRepository) scanRow(row gotabase.Row) (*models.Platform, error) {
-	platform := models.Platform{}
+func scanRow(row gotabase.Row) (*Platform, error) {
+	platform := Platform{}
 	if err := row.Scan(&platform.Id, &platform.Name, &platform.ShortName); err != nil {
 		return nil, utils.ConvertIfNotFoundErr(err)
 	}
 	return &platform, nil
 }
 
-func (o PlatformSortOrder) getSqlColumnName() string {
+func (o SortOrder) getSqlColumnName() string {
 	switch o {
-	case PlatformId:
+	case SortById:
 		return "id"
-	case PlatformName:
+	case SortByName:
 		return "name"
-	case PlatformShortName:
+	case SortByShortName:
 		return "short_name"
 	}
 	return "id"
