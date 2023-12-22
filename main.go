@@ -1,8 +1,11 @@
 package main
 
 import (
-	"github.com/Geepr/game/controllers"
 	"github.com/Geepr/game/database"
+	"github.com/Geepr/game/game"
+	"github.com/Geepr/game/platform"
+	"github.com/Geepr/game/release"
+	releaserelationships "github.com/Geepr/game/release/relationships"
 	"github.com/Geepr/game/services"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gin-gonic/gin"
@@ -44,14 +47,10 @@ func setupEngine() *gin.Engine {
 
 	//todo: base path config
 	basePath := ""
-	gameController := controllers.CreateGameController()
-	gameController.SetupRoutes(router, basePath)
-	platformController := controllers.CreatePlatformController()
-	platformController.SetupRoutes(router, basePath)
-	releaseController := controllers.CreateGameReleaseController()
-	releaseController.SetupRoutes(router, basePath)
-	releasePlatformController := controllers.CreateGameReleasePlatformController()
-	releasePlatformController.SetupRoutes(router, basePath)
+	game.SetupRoutes(router, basePath)
+	platform.SetupRoutes(router, basePath)
+	release.SetupRoutes(router, basePath)
+	releaserelationships.SetupRoutes(router, basePath)
 
 	return router
 }
