@@ -1,8 +1,7 @@
-package repositories
+package release
 
 import (
 	"fmt"
-	"github.com/Geepr/game/models"
 	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
@@ -10,23 +9,15 @@ import (
 	"strings"
 )
 
-type GameReleaseRepository struct {
-	connector gotabase.Connector
-}
-
-func NewGameReleaseRepository(connector gotabase.Connector) *GameReleaseRepository {
-	return &GameReleaseRepository{connector: connector}
-}
-
-type GameReleaseSortOrder uint8
+type SortOrder uint8
 
 const (
-	GameReleaseId GameReleaseSortOrder = iota
-	GameReleaseTitle
-	GameReleaseDate
+	SortById SortOrder = iota
+	SortByTitle
+	SortByDate
 )
 
-func (repo *GameReleaseRepository) GetGameReleases(titleQuery string, gameIdQuery uuid.UUID, pageIndex int, pageSize int, order GameReleaseSortOrder) (*[]*models.GameRelease, error) {
+func getGameReleases(titleQuery string, gameIdQuery uuid.UUID, pageIndex int, pageSize int, order SortOrder) ([]*GameRelease, error) {
 	query := "select id, game_id, title_override, description, release_date, release_date_unknown from game_releases"
 	//todo: this should probably fallback to the original game title query if override is null? - a view of some manner would be helpful here
 	query, args := utils.AppendWhereClause(query, "title_override_normalised", "like", utils.MakeLikeQuery(strings.ToUpper(titleQuery)), utils.IsStringNotEmpty, []any{})
@@ -36,17 +27,17 @@ func (repo *GameReleaseRepository) GetGameReleases(titleQuery string, gameIdQuer
 	if err != nil {
 		return nil, err
 	}
-	return repo.scanGameReleases(query, args...)
+	return scanGameReleases(query, args...)
 }
 
-func (repo *GameReleaseRepository) GetGameReleaseById(id uuid.UUID) (*models.GameRelease, error) {
+func getGameReleaseById(id uuid.UUID) (*GameRelease, error) {
 	query := "select id, game_id, title_override, description, release_date, release_date_unknown from game_releases where id = $1"
-	return repo.scanGameRelease(query, id)
+	return scanGameRelease(query, id)
 }
 
-func (repo *GameReleaseRepository) AddGameRelease(gameRelease *models.GameRelease) error {
+func addGameRelease(gameRelease *GameRelease) error {
 	query := "insert into game_releases (game_id, title_override, description, release_date, release_date_unknown) VALUES  ($1, $2, $3, $4, $5) returning id"
-	result, err := repo.connector.QueryRow(query, gameRelease.GameId, gameRelease.TitleOverride, gameRelease.Description, gameRelease.ReleaseDate, gameRelease.ReleaseDateUnknown)
+	result, err := getConnector().QueryRow(query, gameRelease.GameId, gameRelease.TitleOverride, gameRelease.Description, gameRelease.ReleaseDate, gameRelease.ReleaseDateUnknown)
 	if err != nil {
 		return utils.ConvertIfNotFoundErr(err)
 	}
@@ -56,9 +47,9 @@ func (repo *GameReleaseRepository) AddGameRelease(gameRelease *models.GameReleas
 	return nil
 }
 
-func (repo *GameReleaseRepository) UpdateGameRelease(id uuid.UUID, updatedGameRelease *models.GameRelease) error {
+func updateGameRelease(id uuid.UUID, updatedGameRelease *GameRelease) error {
 	query := "update game_releases set title_override = $2, description = $3, release_date = $4, release_date_unknown = $5 where id = $1"
-	result, err := repo.connector.Exec(query, id, updatedGameRelease.TitleOverride, updatedGameRelease.Description, updatedGameRelease.ReleaseDate, updatedGameRelease.ReleaseDateUnknown)
+	result, err := getConnector().Exec(query, id, updatedGameRelease.TitleOverride, updatedGameRelease.Description, updatedGameRelease.ReleaseDate, updatedGameRelease.ReleaseDateUnknown)
 
 	if err != nil {
 		log.Warnf("Failed to execute update query on game releases: %s", err.Error())
@@ -75,9 +66,9 @@ func (repo *GameReleaseRepository) UpdateGameRelease(id uuid.UUID, updatedGameRe
 	return nil
 }
 
-func (repo *GameReleaseRepository) DeleteGameRelease(id uuid.UUID) error {
+func deleteGameRelease(id uuid.UUID) error {
 	query := "delete from game_releases where id = $1"
-	result, err := repo.connector.Exec(query, id)
+	result, err := getConnector().Exec(query, id)
 	if err != nil {
 		log.Warnf("Failed to execute delete query on game releases: %s", err.Error())
 		return err
@@ -93,50 +84,50 @@ func (repo *GameReleaseRepository) DeleteGameRelease(id uuid.UUID) error {
 	return nil
 }
 
-func (repo *GameReleaseRepository) scanGameReleases(sql string, args ...interface{}) (*[]*models.GameRelease, error) {
-	result, err := repo.connector.QueryRows(sql, args...)
+func scanGameReleases(sql string, args ...interface{}) ([]*GameRelease, error) {
+	result, err := getConnector().QueryRows(sql, args...)
 	if err != nil {
 		log.Warnf("Failed to run query on game releases: %s", err.Error())
 		return nil, err
 	}
 	defer result.Close()
 
-	releases := make([]*models.GameRelease, 0)
+	releases := make([]*GameRelease, 0)
 	for result.Next() {
-		release, err := repo.scanRow(result)
+		release, err := scanRow(result)
 		if err != nil {
 			return nil, err
 		}
 		releases = append(releases, release)
 	}
 
-	return &releases, nil
+	return releases, nil
 }
 
-func (repo *GameReleaseRepository) scanGameRelease(sql string, args ...interface{}) (*models.GameRelease, error) {
-	result, err := repo.connector.QueryRow(sql, args...)
+func scanGameRelease(sql string, args ...interface{}) (*GameRelease, error) {
+	result, err := getConnector().QueryRow(sql, args...)
 	if err != nil {
 		log.Warnf("Failed to run row query on game releases: %s", err.Error())
 		return nil, err
 	}
-	return repo.scanRow(result)
+	return scanRow(result)
 }
 
-func (repo *GameReleaseRepository) scanRow(row gotabase.Row) (*models.GameRelease, error) {
-	release := models.GameRelease{}
+func scanRow(row gotabase.Row) (*GameRelease, error) {
+	release := GameRelease{}
 	if err := row.Scan(&release.Id, &release.GameId, &release.TitleOverride, &release.Description, &release.ReleaseDate, &release.ReleaseDateUnknown); err != nil {
 		return nil, utils.ConvertIfNotFoundErr(err)
 	}
 	return &release, nil
 }
 
-func (o GameReleaseSortOrder) getSqlColumnName() string {
+func (o SortOrder) getSqlColumnName() string {
 	switch o {
-	case GameReleaseId:
+	case SortById:
 		return "id"
-	case GameReleaseTitle:
+	case SortByTitle:
 		return "title_override"
-	case GameReleaseDate:
+	case SortByDate:
 		return "release_date"
 	}
 	return "id"

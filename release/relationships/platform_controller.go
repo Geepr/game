@@ -1,8 +1,7 @@
-package controllers
+package relationships
 
 import (
 	"fmt"
-	"github.com/Geepr/game/repositories"
 	"github.com/Geepr/game/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -11,24 +10,14 @@ import (
 	"net/http"
 )
 
-type GameReleasePlatformController struct {
-	repo *repositories.GameReleasePlatformRepository
-}
-
-var _ Routable = (*GameReleasePlatformController)(nil)
-
-func NewGameReleasePlatformController(repo *repositories.GameReleasePlatformRepository) *GameReleasePlatformController {
-	return &GameReleasePlatformController{repo: repo}
-}
-
-func (g *GameReleasePlatformController) GetByReleaseId(c *gin.Context) {
+func getByReleaseIdRoute(c *gin.Context) {
 	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	result, err := g.repo.GetPlatformIdsForRelease(id)
+	result, err := getPlatformIdsForRelease(id)
 	if err != nil {
 		utils.AbortWithRelevantError(err, c)
 		return
@@ -37,14 +26,14 @@ func (g *GameReleasePlatformController) GetByReleaseId(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func (g *GameReleasePlatformController) GetByPlatformId(c *gin.Context) {
+func getByPlatformIdRoute(c *gin.Context) {
 	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	result, err := g.repo.GetReleaseIdsForPlatforms(id)
+	result, err := getReleaseIdsForPlatforms(id)
 	if err != nil {
 		utils.AbortWithRelevantError(err, c)
 		return
@@ -53,7 +42,7 @@ func (g *GameReleasePlatformController) GetByPlatformId(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func (g *GameReleasePlatformController) Create(c *gin.Context) {
+func createRoute(c *gin.Context) {
 	var createModel struct {
 		PlatformId uuid.UUID `json:"platformId" binding:"required"`
 		ReleaseId  uuid.UUID `json:"releaseId" binding:"required"`
@@ -63,7 +52,7 @@ func (g *GameReleasePlatformController) Create(c *gin.Context) {
 		return
 	}
 
-	if err := g.repo.AddReleasePlatform(createModel.ReleaseId, createModel.PlatformId); err != nil {
+	if err := addReleasePlatform(createModel.ReleaseId, createModel.PlatformId); err != nil {
 		utils.AbortWithRelevantError(err, c)
 		return
 	}
@@ -71,7 +60,7 @@ func (g *GameReleasePlatformController) Create(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
-func (g *GameReleasePlatformController) Delete(c *gin.Context) {
+func deleteRoute(c *gin.Context) {
 	var createModel struct {
 		PlatformId uuid.UUID `json:"platformId" binding:"required"`
 		ReleaseId  uuid.UUID `json:"releaseId" binding:"required"`
@@ -81,7 +70,7 @@ func (g *GameReleasePlatformController) Delete(c *gin.Context) {
 		return
 	}
 
-	if err := g.repo.RemoveReleasePlatform(createModel.ReleaseId, createModel.PlatformId); err != nil {
+	if err := removeReleasePlatform(createModel.ReleaseId, createModel.PlatformId); err != nil {
 		utils.AbortWithRelevantError(err, c)
 		return
 	}
@@ -89,11 +78,11 @@ func (g *GameReleasePlatformController) Delete(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (g *GameReleasePlatformController) SetupRoutes(engine *gin.Engine, basePath string) {
+func SetupRoutes(engine *gin.Engine, basePath string) {
 	baseUrl := fmt.Sprintf("%s/api/v0/releasePlatforms", basePath)
 
-	engine.GET(baseUrl+"/byReleaseId/:id", g.GetByReleaseId)
-	engine.GET(baseUrl+"/byPlatformId/:id", g.GetByPlatformId)
-	engine.POST(baseUrl, g.Create)
-	engine.DELETE(baseUrl, g.Delete)
+	engine.GET(baseUrl+"/byReleaseId/:id", getByReleaseIdRoute)
+	engine.GET(baseUrl+"/byPlatformId/:id", getByPlatformIdRoute)
+	engine.POST(baseUrl, createRoute)
+	engine.DELETE(baseUrl, deleteRoute)
 }
