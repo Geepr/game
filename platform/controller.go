@@ -21,13 +21,24 @@ func getRoute(c *gin.Context) {
 		return
 	}
 
-	platforms, err := getPlatforms(query.Name, query.PageIndex, query.PageSize, query.SortOrder)
+	platforms, totalItems, err := getPlatforms(query.Name, query.PageIndex, query.PageSize, query.SortOrder)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, platforms)
+	response := struct {
+		Platforms  []*Platform `json:"platforms"`
+		Page       int         `json:"page"`
+		PageSize   int         `json:"pageSize"`
+		TotalPages int         `json:"totalPages"`
+	}{
+		Platforms:  platforms,
+		Page:       query.PageIndex,
+		PageSize:   query.PageSize,
+		TotalPages: utils.GetPagesFromItems(totalItems, query.PageSize),
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func getByIdRoute(c *gin.Context) {
