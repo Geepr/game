@@ -65,7 +65,7 @@ func TestPlatformRepository_GetPlatforms_NoParametersSet_ReturnsAllPlatforms(t *
 	test := newPlatformRepoTest(t)
 	test.insertMockData()
 
-	result, err := getPlatforms("", 0, 100, SortById)
+	result, items, err := getPlatforms("", 0, 100, SortById)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, result, 4)
@@ -74,13 +74,14 @@ func TestPlatformRepository_GetPlatforms_NoParametersSet_ReturnsAllPlatforms(t *
 			return value.Name == game.Name && value.ShortName == game.ShortName
 		})
 	}
+	mocks.AssertEquals(t, items, 4)
 }
 
 func TestPlatformRepository_GetPlatforms_NameQueryDefined_ReturnsMatching(t *testing.T) {
 	test := newPlatformRepoTest(t)
 	test.insertMockData()
 
-	result, err := getPlatforms("Aa", 0, 100, SortById)
+	result, items, err := getPlatforms("Aa", 0, 100, SortById)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, result, 2)
@@ -92,16 +93,18 @@ func TestPlatformRepository_GetPlatforms_NameQueryDefined_ReturnsMatching(t *tes
 			return value.Name == platform.Name && value.ShortName == platform.ShortName
 		})
 	}
+	mocks.AssertEquals(t, items, 2)
 }
 
 func TestPlatformRepository_GetPlatforms_TitleQueryDefinedAndNotFound_ReturnsEmpty(t *testing.T) {
 	test := newPlatformRepoTest(t)
 	test.insertMockData()
 
-	result, err := getPlatforms("definitely not found", 0, 100, SortById)
+	result, items, err := getPlatforms("definitely not found", 0, 100, SortById)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, result, 0)
+	mocks.AssertEquals(t, items, 0)
 }
 
 func TestPlatformRepository_GetPlatformById_ValidId_FoundAndReturned(t *testing.T) {
