@@ -13,7 +13,7 @@ func getRoute(c *gin.Context) {
 	var query struct {
 		Name      string    `form:"name"`
 		SortOrder SortOrder `form:"order"`
-		PageIndex int       `form:"index"`
+		PageIndex int       `form:"page"`
 		PageSize  int       `form:"size"`
 	}
 	if err := c.MustBindWith(&query, binding.Query); err != nil {
@@ -21,13 +21,24 @@ func getRoute(c *gin.Context) {
 		return
 	}
 
-	platforms, err := getPlatforms(query.Name, query.PageIndex, query.PageSize, query.SortOrder)
+	platforms, totalItems, err := getPlatforms(query.Name, query.PageIndex, query.PageSize, query.SortOrder)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, platforms)
+	response := struct {
+		Platforms  []*Platform `json:"platforms"`
+		Page       int         `json:"page"`
+		PageSize   int         `json:"pageSize"`
+		TotalPages int         `json:"totalPages"`
+	}{
+		Platforms:  platforms,
+		Page:       query.PageIndex,
+		PageSize:   query.PageSize,
+		TotalPages: utils.GetPagesFromItems(totalItems, query.PageSize),
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func getByIdRoute(c *gin.Context) {
@@ -96,7 +107,7 @@ func updateRoute(c *gin.Context) {
 	c.JSON(http.StatusOK, &platform)
 }
 
-func DeleteRoute(c *gin.Context) {
+func deleteRoute(c *gin.Context) {
 	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
@@ -118,4 +129,5 @@ func SetupRoutes(engine *gin.Engine, basePath string) {
 	engine.GET(baseUrl+"/:id", getByIdRoute)
 	engine.POST(baseUrl, createRoute)
 	engine.PUT(baseUrl+"/:id", updateRoute)
+	engine.DELETE(baseUrl+"/:id", deleteRoute)
 }

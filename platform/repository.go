@@ -17,15 +17,20 @@ const (
 	SortByShortName
 )
 
-func getPlatforms(nameQuery string, pageIndex int, pageSize int, order SortOrder) ([]*Platform, error) {
+func getPlatforms(nameQuery string, pageIndex int, pageSize int, order SortOrder) ([]*Platform, int, error) {
 	query := "select id, name, short_name from platforms"
 	query, args := utils.AppendWhereClause(query, "name_normalised", "like", utils.MakeLikeQuery(strings.ToUpper(nameQuery)), utils.IsStringNotEmpty, []any{})
 	query += fmt.Sprintf(" order by %s", order.getSqlColumnName())
-	query, _, err := utils.Paginate(query, pageIndex, pageSize)
+	query, countQuery, err := utils.Paginate(query, pageIndex, pageSize)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return scanPlatforms(query, args...)
+	countResults, err := utils.ScanCountQuery(getConnector(), countQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	platforms, err := scanPlatforms(query, args...)
+	return platforms, countResults, err
 }
 
 func getPlatformById(id uuid.UUID) (*Platform, error) {
