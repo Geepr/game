@@ -107,7 +107,7 @@ func updateRoute(c *gin.Context) {
 	c.JSON(http.StatusOK, &platform)
 }
 
-func DeleteRoute(c *gin.Context) {
+func deleteRoute(c *gin.Context) {
 	id, err := utils.ParseUuidFromParam(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
@@ -129,4 +129,5 @@ func SetupRoutes(engine *gin.Engine, basePath string) {
 	engine.GET(baseUrl+"/:id", getByIdRoute)
 	engine.POST(baseUrl, createRoute)
 	engine.PUT(baseUrl+"/:id", updateRoute)
+	engine.DELETE(baseUrl+"/:id", deleteRoute)
 }
