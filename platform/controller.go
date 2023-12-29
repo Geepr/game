@@ -13,7 +13,7 @@ func getRoute(c *gin.Context) {
 	var query struct {
 		Name      string    `form:"name"`
 		SortOrder SortOrder `form:"order"`
-		PageIndex int       `form:"index"`
+		PageIndex int       `form:"page"`
 		PageSize  int       `form:"size"`
 	}
 	if err := c.MustBindWith(&query, binding.Query); err != nil {
