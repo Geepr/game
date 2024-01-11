@@ -24,13 +24,24 @@ func getRoute(c *gin.Context) {
 		return
 	}
 
-	releases, err := getGameReleases(query.Title, query.GameId, query.PageIndex, query.PageSize, query.SortOrder)
+	releases, totalItems, err := getGameReleases(query.Title, query.GameId, query.PageIndex, query.PageSize, query.SortOrder)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, releases)
+	response := struct {
+		Games      []*GameRelease `json:"releases"`
+		Page       int            `json:"page"`
+		PageSize   int            `json:"pageSize"`
+		TotalPages int            `json:"totalPages"`
+	}{
+		Games:      releases,
+		Page:       query.PageIndex,
+		PageSize:   query.PageSize,
+		TotalPages: utils.GetPagesFromItems(totalItems, query.PageSize),
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func getByIdRoute(c *gin.Context) {
