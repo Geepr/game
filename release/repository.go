@@ -17,17 +17,22 @@ const (
 	SortByDate
 )
 
-func getGameReleases(titleQuery string, gameIdQuery uuid.UUID, pageIndex int, pageSize int, order SortOrder) ([]*GameRelease, error) {
+func getGameReleases(titleQuery string, gameIdQuery uuid.UUID, pageIndex int, pageSize int, order SortOrder) ([]*GameRelease, int, error) {
 	query := "select id, game_id, title_override, description, release_date, release_date_unknown from game_releases"
 	//todo: this should probably fallback to the original game title query if override is null? - a view of some manner would be helpful here
 	query, args := utils.AppendWhereClause(query, "title_override_normalised", "like", utils.MakeLikeQuery(strings.ToUpper(titleQuery)), utils.IsStringNotEmpty, []any{})
 	query, args = utils.AppendWhereClause(query, "game_id", "=", gameIdQuery, utils.IsUuidNotEmpty, args)
 	query += fmt.Sprintf(" order by %s", order.getSqlColumnName())
-	query, _, err := utils.Paginate(query, pageIndex, pageSize)
+	query, countQuery, err := utils.Paginate(query, pageIndex, pageSize)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return scanGameReleases(query, args...)
+	countResults, err := utils.ScanCountQuery(getConnector(), countQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	scanResult, err := scanGameReleases(query, args...)
+	return scanResult, countResults, err
 }
 
 func getGameReleaseById(id uuid.UUID) (*GameRelease, error) {

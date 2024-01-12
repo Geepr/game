@@ -14,23 +14,36 @@ import (
 func getRoute(c *gin.Context) {
 	var query struct {
 		Title     string    `form:"title"`
-		GameId    uuid.UUID `form:"gameId"`
+		GameId    string    `form:"gameId"`
 		SortOrder SortOrder `form:"order"`
 		PageIndex int       `form:"index"`
 		PageSize  int       `form:"size"`
 	}
-	if err := c.MustBindWith(&query, binding.Query); err != nil {
+	var err error
+	var gameId uuid.UUID
+	if err, gameId = c.MustBindWith(&query, binding.Query), uuid.FromStringOrNil(query.GameId); err != nil || gameId == uuid.Nil {
 		log.Infof("Failed to bind game release query: %s", err.Error())
 		return
 	}
 
-	releases, err := getGameReleases(query.Title, query.GameId, query.PageIndex, query.PageSize, query.SortOrder)
+	releases, totalItems, err := getGameReleases(query.Title, gameId, query.PageIndex, query.PageSize, query.SortOrder)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, releases)
+	response := struct {
+		Games      []*GameRelease `json:"releases"`
+		Page       int            `json:"page"`
+		PageSize   int            `json:"pageSize"`
+		TotalPages int            `json:"totalPages"`
+	}{
+		Games:      releases,
+		Page:       query.PageIndex,
+		PageSize:   query.PageSize,
+		TotalPages: utils.GetPagesFromItems(totalItems, query.PageSize),
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func getByIdRoute(c *gin.Context) {
