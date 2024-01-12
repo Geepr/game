@@ -89,10 +89,11 @@ func TestGameReleaseRepository_GetReleases_NoParametersSet_ReturnsAllReleases(t 
 	test := newGameReleaseRepoTest(t)
 	test.insertMockData()
 
-	result, err := getGameReleases("", utils.DefaultUuid, 0, 100, SortById)
+	result, resultCount, err := getGameReleases("", utils.DefaultUuid, 0, 100, SortById)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, result, 4)
+	mocks.AssertEquals(t, resultCount, 4)
 	for _, release := range test.mockData {
 		mocks.AssertArrayContains(t, result, func(value *GameRelease) bool {
 			return release.GameId == value.GameId &&
@@ -108,10 +109,11 @@ func TestGameReleaseRepository_GetReleases_TitleAndGameIdQueryDefined_ReturnsMat
 	test := newGameReleaseRepoTest(t)
 	test.insertMockData()
 
-	result, err := getGameReleases("other", test.mockData[1].GameId, 0, 100, SortById)
+	result, resultCount, err := getGameReleases("other", test.mockData[1].GameId, 0, 100, SortById)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, result, 1)
+	mocks.AssertEquals(t, resultCount, 1)
 	single := result[0]
 	mocks.AssertEquals(t, single.Id, test.mockData[1].Id)
 }
@@ -120,10 +122,11 @@ func TestGameReleaseRepository_GetReleases_QueryDefinedAndNotFound_ReturnsEmpty(
 	test := newGameReleaseRepoTest(t)
 	test.insertMockData()
 
-	result, err := getGameReleases("definitely not found", utils.DefaultUuid, 0, 100, SortById)
+	result, resultCount, err := getGameReleases("definitely not found", utils.DefaultUuid, 0, 100, SortById)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertCountEqual(t, result, 0)
+	mocks.AssertEquals(t, resultCount, 0)
 }
 
 func TestGameReleaseRepository_GetGameReleaseById_ReleaseIdValid_ReleaseReturned(t *testing.T) {
