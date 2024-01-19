@@ -46,8 +46,13 @@ func AppendWhereClause[T any](currentQuery string, columnName string, operand st
 		return currentQuery, positionalValues
 	}
 
+	lastFrom := strings.LastIndex(currentQuery, " from ")
+	// this is to prevent subqueries from being included in the search
+	// otherwise, if the subquery already container the "where" clause, the actual query would just get "and" appended
+	finalQueryFrom := currentQuery[lastFrom:]
+
 	combiningWord := "where"
-	if strings.Contains(currentQuery, "where") {
+	if strings.Contains(finalQueryFrom, "where") {
 		combiningWord = "and"
 	}
 
