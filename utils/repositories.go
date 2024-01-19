@@ -36,9 +36,9 @@ func Paginate(completeQuery string, pageIndex int, pageSize int) (query string, 
 	}
 
 	offset := pageSize * (pageIndex - 1)
-	replaceRegex := regexp.MustCompile("select .* from")
-	trimRegex := regexp.MustCompile("order by .*")
-	return fmt.Sprintf("%s offset %d limit %d", completeQuery, offset, pageSize), trimRegex.ReplaceAllString(replaceRegex.ReplaceAllString(completeQuery, "select count(*) from"), ""), nil
+	replaceRegex := regexp.MustCompile("select .* from ")
+	trimRegex := regexp.MustCompile(" order by .*")
+	return fmt.Sprintf("%s offset %d limit %d", completeQuery, offset, pageSize), trimRegex.ReplaceAllString(replaceRegex.ReplaceAllString(completeQuery, "select count(*) from "), ""), nil
 }
 
 func AppendWhereClause[T any](currentQuery string, columnName string, operand string, value T, isSet func(T) bool, positionalValues []any) (newQuery string, newPositional []any) {
@@ -46,8 +46,13 @@ func AppendWhereClause[T any](currentQuery string, columnName string, operand st
 		return currentQuery, positionalValues
 	}
 
+	lastFrom := strings.LastIndex(currentQuery, " from ")
+	// this is to prevent subqueries from being included in the search
+	// otherwise, if the subquery already container the "where" clause, the actual query would just get "and" appended
+	finalQueryFrom := currentQuery[lastFrom:]
+
 	combiningWord := "where"
-	if strings.Contains(currentQuery, "where") {
+	if strings.Contains(finalQueryFrom, "where") {
 		combiningWord = "and"
 	}
 
