@@ -36,9 +36,9 @@ func Paginate(completeQuery string, pageIndex int, pageSize int) (query string, 
 	}
 
 	offset := pageSize * (pageIndex - 1)
-	replaceRegex := regexp.MustCompile("select .* from")
-	trimRegex := regexp.MustCompile("order by .*")
-	return fmt.Sprintf("%s offset %d limit %d", completeQuery, offset, pageSize), trimRegex.ReplaceAllString(replaceRegex.ReplaceAllString(completeQuery, "select count(*) from"), ""), nil
+	replaceRegex := regexp.MustCompile("select .* from ")
+	trimRegex := regexp.MustCompile(" order by .*")
+	return fmt.Sprintf("%s offset %d limit %d", completeQuery, offset, pageSize), trimRegex.ReplaceAllString(replaceRegex.ReplaceAllString(completeQuery, "select count(*) from "), ""), nil
 }
 
 func AppendWhereClause[T any](currentQuery string, columnName string, operand string, value T, isSet func(T) bool, positionalValues []any) (newQuery string, newPositional []any) {
