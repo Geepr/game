@@ -5,6 +5,7 @@ import (
 	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
+	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 	"strings"
 )
@@ -18,7 +19,7 @@ const (
 )
 
 func getGameReleases(titleQuery string, gameIdQuery uuid.UUID, pageIndex int, pageSize int, order SortOrder) ([]*GameRelease, int, error) {
-	query := "select id, game_id, title_override, description, release_date, release_date_unknown from game_releases"
+	query := "select id, game_id, title_override, description, release_date, release_date_unknown, array(select grp.platform_id from game_release_platforms grp where grp.game_release_id = id) from game_releases"
 	//todo: this should probably fallback to the original game title query if override is null? - a view of some manner would be helpful here
 	query, args := utils.AppendWhereClause(query, "title_override_normalised", "like", utils.MakeLikeQuery(strings.ToUpper(titleQuery)), utils.IsStringNotEmpty, []any{})
 	query, args = utils.AppendWhereClause(query, "game_id", "=", gameIdQuery, utils.IsUuidNotEmpty, args)
@@ -36,7 +37,7 @@ func getGameReleases(titleQuery string, gameIdQuery uuid.UUID, pageIndex int, pa
 }
 
 func getGameReleaseById(id uuid.UUID) (*GameRelease, error) {
-	query := "select id, game_id, title_override, description, release_date, release_date_unknown from game_releases where id = $1"
+	query := "select id, game_id, title_override, description, release_date, release_date_unknown, array(select grp.platform_id from game_release_platforms grp where grp.game_release_id = $1) from game_releases where id = $1"
 	return scanGameRelease(query, id)
 }
 
@@ -120,7 +121,7 @@ func scanGameRelease(sql string, args ...interface{}) (*GameRelease, error) {
 
 func scanRow(row gotabase.Row) (*GameRelease, error) {
 	release := GameRelease{}
-	if err := row.Scan(&release.Id, &release.GameId, &release.TitleOverride, &release.Description, &release.ReleaseDate, &release.ReleaseDateUnknown); err != nil {
+	if err := row.Scan(&release.Id, &release.GameId, &release.TitleOverride, &release.Description, &release.ReleaseDate, &release.ReleaseDateUnknown, pq.Array(&release.PlatformIds)); err != nil {
 		return nil, utils.ConvertIfNotFoundErr(err)
 	}
 	return &release, nil

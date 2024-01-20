@@ -5,6 +5,7 @@ import (
 	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
+	"slices"
 	"testing"
 	"time"
 )
@@ -43,6 +44,10 @@ func (test *gameReleaseRepoTest) insertMockData() {
 		"($4, $4, null, null, '2023-01-01', false)",
 		id1, id2, id3, id4)
 	mocks.PanicOnErr(err)
+	_, err = test.connection.Exec("insert into platforms (id, name, short_name) values ($1, 'test', 'tt')", id1)
+	mocks.PanicOnErr(err)
+	_, err = test.connection.Exec("insert into game_release_platforms (platform_id, game_release_id) values ($1, $1)", id1)
+	mocks.PanicOnErr(err)
 	title2, desc2 := "other title", "some description"
 	release, _ := time.Parse(time.DateOnly, "2023-01-01")
 	test.mockData = []*GameRelease{
@@ -50,6 +55,7 @@ func (test *gameReleaseRepoTest) insertMockData() {
 			Id:                 id1,
 			GameId:             id1,
 			ReleaseDateUnknown: true,
+			PlatformIds:        []uuid.UUID{id1},
 		},
 		{
 			Id:                 id2,
@@ -100,7 +106,8 @@ func TestGameReleaseRepository_GetReleases_NoParametersSet_ReturnsAllReleases(t 
 				mocks.CompareNillable(release.TitleOverride, value.TitleOverride) &&
 				mocks.CompareNillable(release.Description, value.Description) &&
 				test.compareDates(release.ReleaseDate, value.ReleaseDate) &&
-				release.ReleaseDateUnknown == value.ReleaseDateUnknown
+				release.ReleaseDateUnknown == value.ReleaseDateUnknown &&
+				slices.Equal(release.PlatformIds, value.PlatformIds)
 		})
 	}
 }
