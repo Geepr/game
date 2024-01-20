@@ -43,14 +43,22 @@ func getGameReleaseById(id uuid.UUID) (*GameRelease, error) {
 
 func addGameRelease(gameRelease *GameRelease) error {
 	query := "insert into game_releases (game_id, title_override, description, release_date, release_date_unknown) VALUES  ($1, $2, $3, $4, $5) returning id"
-	result, err := getConnector().QueryRow(query, gameRelease.GameId, gameRelease.TitleOverride, gameRelease.Description, gameRelease.ReleaseDate, gameRelease.ReleaseDateUnknown)
+	transaction, err := getTransaction()
+	if err != nil {
+		return err
+	}
+	defer transaction.Rollback()
+	result, err := transaction.QueryRow(query, gameRelease.GameId, gameRelease.TitleOverride, gameRelease.Description, gameRelease.ReleaseDate, gameRelease.ReleaseDateUnknown)
 	if err != nil {
 		return utils.ConvertIfNotFoundErr(err)
 	}
 	if err = result.Scan(&gameRelease.Id); err != nil {
 		return err
 	}
-	return nil
+	if err = createGameReleasePlatforms(gameRelease, transaction); err != nil {
+		return utils.ConvertIfNotFoundErr(err)
+	}
+	return transaction.Commit()
 }
 
 func updateGameRelease(id uuid.UUID, updatedGameRelease *GameRelease) error {
@@ -137,4 +145,14 @@ func (o SortOrder) getSqlColumnName() string {
 		return "release_date"
 	}
 	return "id"
+}
+
+func createGameReleasePlatforms(gameRelease *GameRelease, connector gotabase.Connector) error {
+	for _, platformId := range gameRelease.PlatformIds {
+		_, err := connector.Exec("insert into game_release_platforms (platform_id, game_release_id) values ($1, $2)", platformId, gameRelease.Id)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -11,9 +11,10 @@ import (
 )
 
 type gameReleaseRepoTest struct {
-	connection gotabase.Connector
-	mockData   []*GameRelease
-	dbName     string
+	connection     gotabase.Connector
+	mockData       []*GameRelease
+	mockPlatformId uuid.UUID
+	dbName         string
 }
 
 func newGameReleaseRepoTest(t *testing.T) *gameReleaseRepoTest {
@@ -79,6 +80,7 @@ func (test *gameReleaseRepoTest) insertMockData() {
 			ReleaseDateUnknown: false,
 		},
 	}
+	test.mockPlatformId = id1
 }
 
 func (test *gameReleaseRepoTest) compareDates(date1 *time.Time, date2 *time.Time) bool {
@@ -171,12 +173,17 @@ func TestGameReleaseRepository_AddRelease_New_ReleaseAdded(t *testing.T) {
 		GameId:             test.mockData[0].GameId,
 		ReleaseDate:        &release,
 		ReleaseDateUnknown: false,
+		PlatformIds:        []uuid.UUID{test.mockPlatformId},
 	}
 
 	err := addGameRelease(&newRelease)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertNotDefault(t, newRelease.Id)
+	databaseResult, err := getGameReleaseById(newRelease.Id)
+	mocks.AssertEquals(t, err, nil)
+	mocks.AssertEquals(t, len(databaseResult.PlatformIds), 1)
+	mocks.AssertEquals(t, databaseResult.PlatformIds[0], test.mockPlatformId)
 }
 
 func TestGameReleaseRepository_AddRelease_MissingGameId_NotFoundReturned(t *testing.T) {
@@ -186,6 +193,23 @@ func TestGameReleaseRepository_AddRelease_MissingGameId_NotFoundReturned(t *test
 	newRelease := GameRelease{
 		GameId:             testId,
 		ReleaseDateUnknown: false,
+	}
+
+	err := addGameRelease(&newRelease)
+
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
+}
+
+func TestGameReleaseRepository_AddRelease_MissingPlatformId_NotFoundReturned(t *testing.T) {
+	test := newGameReleaseRepoTest(t)
+	test.insertMockData()
+	testId, _ := uuid.NewV4()
+	release, _ := time.Parse(time.DateOnly, "2020-05-05")
+	newRelease := GameRelease{
+		GameId:             test.mockData[0].GameId,
+		ReleaseDate:        &release,
+		ReleaseDateUnknown: false,
+		PlatformIds:        []uuid.UUID{test.mockPlatformId, testId},
 	}
 
 	err := addGameRelease(&newRelease)
