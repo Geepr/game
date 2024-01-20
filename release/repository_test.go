@@ -252,7 +252,7 @@ func TestGameReleaseRepository_UpdateRelease_Missing_ReturnsNotFound(t *testing.
 func TestGameReleaseRepository_DeleteRelease_Exists_Removes(t *testing.T) {
 	test := newGameReleaseRepoTest(t)
 	test.insertMockData()
-	toDelete := test.mockData[2]
+	toDelete := test.mockData[0]
 
 	err := deleteGameRelease(toDelete.Id)
 

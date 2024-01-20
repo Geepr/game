@@ -82,7 +82,15 @@ func updateGameRelease(id uuid.UUID, updatedGameRelease *GameRelease) error {
 
 func deleteGameRelease(id uuid.UUID) error {
 	query := "delete from game_releases where id = $1"
-	result, err := getConnector().Exec(query, id)
+	transaction, err := getTransaction()
+	if err != nil {
+		return err
+	}
+	defer transaction.Rollback()
+	if err = removeAllGameReleasePlatformsForRelease(id, transaction); err != nil {
+		return err
+	}
+	result, err := transaction.Exec(query, id)
 	if err != nil {
 		log.Warnf("Failed to execute delete query on game releases: %s", err.Error())
 		return err
@@ -95,7 +103,7 @@ func deleteGameRelease(id uuid.UUID) error {
 	if affected != 1 {
 		return utils.DataNotFoundErr
 	}
-	return nil
+	return transaction.Commit()
 }
 
 func scanGameReleases(sql string, args ...interface{}) ([]*GameRelease, error) {
@@ -155,4 +163,9 @@ func createGameReleasePlatforms(gameRelease *GameRelease, connector gotabase.Con
 		}
 	}
 	return nil
+}
+
+func removeAllGameReleasePlatformsForRelease(releaseId uuid.UUID, connector gotabase.Connector) error {
+	_, err := connector.Exec("delete from game_release_platforms where game_release_id = $1", releaseId)
+	return err
 }
