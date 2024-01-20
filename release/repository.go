@@ -53,7 +53,7 @@ func addGameRelease(gameRelease *GameRelease) error {
 		return utils.ConvertIfNotFoundErr(err)
 	}
 	if err = result.Scan(&gameRelease.Id); err != nil {
-		return err
+		return utils.ConvertIfNotFoundErr(err)
 	}
 	if err = createGameReleasePlatforms(gameRelease, transaction); err != nil {
 		return utils.ConvertIfNotFoundErr(err)
@@ -67,6 +67,7 @@ func updateGameRelease(id uuid.UUID, updatedGameRelease *GameRelease) error {
 	if err != nil {
 		return err
 	}
+	defer transaction.Rollback()
 	result, err := transaction.Exec(query, id, updatedGameRelease.TitleOverride, updatedGameRelease.Description, updatedGameRelease.ReleaseDate, updatedGameRelease.ReleaseDateUnknown)
 
 	if err != nil {
