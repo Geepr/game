@@ -63,7 +63,11 @@ func addGameRelease(gameRelease *GameRelease) error {
 
 func updateGameRelease(id uuid.UUID, updatedGameRelease *GameRelease) error {
 	query := "update game_releases set title_override = $2, description = $3, release_date = $4, release_date_unknown = $5 where id = $1"
-	result, err := getConnector().Exec(query, id, updatedGameRelease.TitleOverride, updatedGameRelease.Description, updatedGameRelease.ReleaseDate, updatedGameRelease.ReleaseDateUnknown)
+	transaction, err := getTransaction()
+	if err != nil {
+		return err
+	}
+	result, err := transaction.Exec(query, id, updatedGameRelease.TitleOverride, updatedGameRelease.Description, updatedGameRelease.ReleaseDate, updatedGameRelease.ReleaseDateUnknown)
 
 	if err != nil {
 		log.Warnf("Failed to execute update query on game releases: %s", err.Error())
@@ -77,7 +81,13 @@ func updateGameRelease(id uuid.UUID, updatedGameRelease *GameRelease) error {
 	if affected != 1 {
 		return utils.DataNotFoundErr
 	}
-	return nil
+	if err = removeAllGameReleasePlatformsForRelease(id, transaction); err != nil {
+		return err
+	}
+	if err = createGameReleasePlatforms(updatedGameRelease, transaction); err != nil {
+		return err
+	}
+	return transaction.Commit()
 }
 
 func deleteGameRelease(id uuid.UUID) error {

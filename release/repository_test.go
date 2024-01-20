@@ -226,8 +226,12 @@ func TestGameReleaseRepository_UpdateRelease_Exists_Updates(t *testing.T) {
 	modified.Description = &desc
 	modified.ReleaseDateUnknown = true
 	modified.ReleaseDate = nil
+	platform2Id, _ := uuid.NewV4()
+	modified.PlatformIds = []uuid.UUID{platform2Id}
+	_, err := test.connection.Exec("insert into platforms (id, name, short_name) values ($1, 'test 2', 'tt2')", platform2Id)
+	mocks.PanicOnErr(err)
 
-	err := updateGameRelease(modified.Id, modified)
+	err = updateGameRelease(modified.Id, modified)
 
 	mocks.AssertDefault(t, err)
 	loaded, _ := getGameReleaseById(modified.Id)
@@ -236,6 +240,8 @@ func TestGameReleaseRepository_UpdateRelease_Exists_Updates(t *testing.T) {
 	mocks.AssertEquals(t, *loaded.Description, *modified.Description)
 	mocks.AssertEquals(t, loaded.ReleaseDate, modified.ReleaseDate)
 	mocks.AssertEquals(t, loaded.ReleaseDateUnknown, modified.ReleaseDateUnknown)
+	mocks.AssertEquals(t, len(loaded.PlatformIds), 1)
+	mocks.AssertEquals(t, loaded.PlatformIds[0], platform2Id)
 }
 
 func TestGameReleaseRepository_UpdateRelease_Missing_ReturnsNotFound(t *testing.T) {
