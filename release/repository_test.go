@@ -5,14 +5,16 @@ import (
 	"github.com/Geepr/game/utils"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gofrs/uuid"
+	"slices"
 	"testing"
 	"time"
 )
 
 type gameReleaseRepoTest struct {
-	connection gotabase.Connector
-	mockData   []*GameRelease
-	dbName     string
+	connection     gotabase.Connector
+	mockData       []*GameRelease
+	mockPlatformId uuid.UUID
+	dbName         string
 }
 
 func newGameReleaseRepoTest(t *testing.T) *gameReleaseRepoTest {
@@ -43,6 +45,10 @@ func (test *gameReleaseRepoTest) insertMockData() {
 		"($4, $4, null, null, '2023-01-01', false)",
 		id1, id2, id3, id4)
 	mocks.PanicOnErr(err)
+	_, err = test.connection.Exec("insert into platforms (id, name, short_name) values ($1, 'test', 'tt')", id1)
+	mocks.PanicOnErr(err)
+	_, err = test.connection.Exec("insert into game_release_platforms (platform_id, game_release_id) values ($1, $1)", id1)
+	mocks.PanicOnErr(err)
 	title2, desc2 := "other title", "some description"
 	release, _ := time.Parse(time.DateOnly, "2023-01-01")
 	test.mockData = []*GameRelease{
@@ -50,6 +56,7 @@ func (test *gameReleaseRepoTest) insertMockData() {
 			Id:                 id1,
 			GameId:             id1,
 			ReleaseDateUnknown: true,
+			PlatformIds:        []uuid.UUID{id1},
 		},
 		{
 			Id:                 id2,
@@ -73,6 +80,7 @@ func (test *gameReleaseRepoTest) insertMockData() {
 			ReleaseDateUnknown: false,
 		},
 	}
+	test.mockPlatformId = id1
 }
 
 func (test *gameReleaseRepoTest) compareDates(date1 *time.Time, date2 *time.Time) bool {
@@ -100,7 +108,8 @@ func TestGameReleaseRepository_GetReleases_NoParametersSet_ReturnsAllReleases(t 
 				mocks.CompareNillable(release.TitleOverride, value.TitleOverride) &&
 				mocks.CompareNillable(release.Description, value.Description) &&
 				test.compareDates(release.ReleaseDate, value.ReleaseDate) &&
-				release.ReleaseDateUnknown == value.ReleaseDateUnknown
+				release.ReleaseDateUnknown == value.ReleaseDateUnknown &&
+				slices.Equal(release.PlatformIds, value.PlatformIds)
 		})
 	}
 }
@@ -164,12 +173,17 @@ func TestGameReleaseRepository_AddRelease_New_ReleaseAdded(t *testing.T) {
 		GameId:             test.mockData[0].GameId,
 		ReleaseDate:        &release,
 		ReleaseDateUnknown: false,
+		PlatformIds:        []uuid.UUID{test.mockPlatformId},
 	}
 
 	err := addGameRelease(&newRelease)
 
 	mocks.AssertDefault(t, err)
 	mocks.AssertNotDefault(t, newRelease.Id)
+	databaseResult, err := getGameReleaseById(newRelease.Id)
+	mocks.AssertEquals(t, err, nil)
+	mocks.AssertEquals(t, len(databaseResult.PlatformIds), 1)
+	mocks.AssertEquals(t, databaseResult.PlatformIds[0], test.mockPlatformId)
 }
 
 func TestGameReleaseRepository_AddRelease_MissingGameId_NotFoundReturned(t *testing.T) {
@@ -186,6 +200,23 @@ func TestGameReleaseRepository_AddRelease_MissingGameId_NotFoundReturned(t *test
 	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
 }
 
+func TestGameReleaseRepository_AddRelease_MissingPlatformId_NotFoundReturned(t *testing.T) {
+	test := newGameReleaseRepoTest(t)
+	test.insertMockData()
+	testId, _ := uuid.NewV4()
+	release, _ := time.Parse(time.DateOnly, "2020-05-05")
+	newRelease := GameRelease{
+		GameId:             test.mockData[0].GameId,
+		ReleaseDate:        &release,
+		ReleaseDateUnknown: false,
+		PlatformIds:        []uuid.UUID{test.mockPlatformId, testId},
+	}
+
+	err := addGameRelease(&newRelease)
+
+	mocks.AssertEquals(t, err, utils.DataNotFoundErr)
+}
+
 func TestGameReleaseRepository_UpdateRelease_Exists_Updates(t *testing.T) {
 	test := newGameReleaseRepoTest(t)
 	test.insertMockData()
@@ -195,8 +226,12 @@ func TestGameReleaseRepository_UpdateRelease_Exists_Updates(t *testing.T) {
 	modified.Description = &desc
 	modified.ReleaseDateUnknown = true
 	modified.ReleaseDate = nil
+	platform2Id, _ := uuid.NewV4()
+	modified.PlatformIds = []uuid.UUID{platform2Id}
+	_, err := test.connection.Exec("insert into platforms (id, name, short_name) values ($1, 'test 2', 'tt2')", platform2Id)
+	mocks.PanicOnErr(err)
 
-	err := updateGameRelease(modified.Id, modified)
+	err = updateGameRelease(modified.Id, modified)
 
 	mocks.AssertDefault(t, err)
 	loaded, _ := getGameReleaseById(modified.Id)
@@ -205,6 +240,8 @@ func TestGameReleaseRepository_UpdateRelease_Exists_Updates(t *testing.T) {
 	mocks.AssertEquals(t, *loaded.Description, *modified.Description)
 	mocks.AssertEquals(t, loaded.ReleaseDate, modified.ReleaseDate)
 	mocks.AssertEquals(t, loaded.ReleaseDateUnknown, modified.ReleaseDateUnknown)
+	mocks.AssertEquals(t, len(loaded.PlatformIds), 1)
+	mocks.AssertEquals(t, loaded.PlatformIds[0], platform2Id)
 }
 
 func TestGameReleaseRepository_UpdateRelease_Missing_ReturnsNotFound(t *testing.T) {
@@ -221,7 +258,7 @@ func TestGameReleaseRepository_UpdateRelease_Missing_ReturnsNotFound(t *testing.
 func TestGameReleaseRepository_DeleteRelease_Exists_Removes(t *testing.T) {
 	test := newGameReleaseRepoTest(t)
 	test.insertMockData()
-	toDelete := test.mockData[2]
+	toDelete := test.mockData[0]
 
 	err := deleteGameRelease(toDelete.Id)
 

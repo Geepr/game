@@ -64,11 +64,12 @@ func getByIdRoute(c *gin.Context) {
 
 func createRoute(c *gin.Context) {
 	var createModel struct {
-		GameId             uuid.UUID `json:"gameId" binding:"required"`
-		TitleOverride      string    `json:"title" binding:"max=200"`
-		Description        string    `json:"description" binding:"max=2000"`
-		ReleaseDateUnknown bool      `json:"releaseDateUnknown"`
-		ReleaseDate        time.Time `json:"releaseDate"` //in format 2006-01-02T15:04:05Z07:00
+		GameId             uuid.UUID   `json:"gameId" binding:"required"`
+		TitleOverride      string      `json:"title" binding:"max=200"`
+		Description        string      `json:"description" binding:"max=2000"`
+		ReleaseDateUnknown bool        `json:"releaseDateUnknown"`
+		ReleaseDate        time.Time   `json:"releaseDate"` //in format 2006-01-02T15:04:05Z07:00
+		PlatformIds        []uuid.UUID `json:"platformIds" binding:"required"`
 	}
 	if err := c.MustBindWith(&createModel, binding.JSON); err != nil {
 		log.Infof("Failed to parse release creation model: %s", err.Error())
@@ -81,6 +82,7 @@ func createRoute(c *gin.Context) {
 		Description:        utils.GetNilIfDefault(createModel.Description),
 		ReleaseDate:        utils.GetNilIfDefault(createModel.ReleaseDate),
 		ReleaseDateUnknown: createModel.ReleaseDateUnknown,
+		PlatformIds:        createModel.PlatformIds,
 	}
 	if err := addGameRelease(&release); err != nil {
 		utils.AbortWithRelevantError(err, c)
@@ -92,10 +94,11 @@ func createRoute(c *gin.Context) {
 
 func updateRoute(c *gin.Context) {
 	var updateModel struct {
-		TitleOverride      string    `json:"title" binding:"max=200"`
-		Description        string    `json:"description" binding:"max=2000"`
-		ReleaseDateUnknown bool      `json:"releaseDateUnknown"`
-		ReleaseDate        time.Time `json:"releaseDate"` //in format 2006-01-02T15:04:05Z07:00
+		TitleOverride      string      `json:"title" binding:"max=200"`
+		Description        string      `json:"description" binding:"max=2000"`
+		ReleaseDateUnknown bool        `json:"releaseDateUnknown"`
+		ReleaseDate        time.Time   `json:"releaseDate"` //in format 2006-01-02T15:04:05Z07:00
+		PlatformIds        []uuid.UUID `json:"platformIds" binding:"required"`
 	}
 	if err := c.MustBindWith(&updateModel, binding.JSON); err != nil {
 		log.Infof("Failed to parse release update model: %s", err.Error())
@@ -112,6 +115,7 @@ func updateRoute(c *gin.Context) {
 		Description:        utils.GetNilIfDefault(updateModel.Description),
 		ReleaseDate:        utils.GetNilIfDefault(updateModel.ReleaseDate),
 		ReleaseDateUnknown: updateModel.ReleaseDateUnknown,
+		PlatformIds:        updateModel.PlatformIds,
 	}
 	if err := updateGameRelease(id, &release); err != nil {
 		utils.AbortWithRelevantError(err, c)

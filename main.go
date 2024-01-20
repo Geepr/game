@@ -5,7 +5,6 @@ import (
 	"github.com/Geepr/game/game"
 	"github.com/Geepr/game/platform"
 	"github.com/Geepr/game/release"
-	releaserelationships "github.com/Geepr/game/release/relationships"
 	"github.com/Geepr/game/services"
 	"github.com/KowalskiPiotr98/gotabase"
 	"github.com/gin-gonic/gin"
@@ -50,7 +49,6 @@ func setupEngine() *gin.Engine {
 	game.SetupRoutes(router, basePath)
 	platform.SetupRoutes(router, basePath)
 	release.SetupRoutes(router, basePath)
-	releaserelationships.SetupRoutes(router, basePath)
 
 	return router
 }

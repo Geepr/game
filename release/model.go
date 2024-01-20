@@ -19,4 +19,6 @@ type GameRelease struct {
 	// Setting this field to true automatically assumes that the release is not public yet, even if ReleaseDate is set in the past.
 	// If ReleaseDate is set when this field is true, it should be treated as an estimate instead.
 	ReleaseDateUnknown bool `json:"releaseDateUnknown"`
+	// PlatformIds contains ids of platforms assigned to this release.
+	PlatformIds []uuid.UUID `json:"platformIds"`
 }
