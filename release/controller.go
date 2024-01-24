@@ -111,6 +111,7 @@ func updateRoute(c *gin.Context) {
 	}
 
 	release := GameRelease{
+		Id:                 id,
 		TitleOverride:      utils.GetNilIfDefault(updateModel.TitleOverride),
 		Description:        utils.GetNilIfDefault(updateModel.Description),
 		ReleaseDate:        utils.GetNilIfDefault(updateModel.ReleaseDate),
